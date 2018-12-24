@@ -1,0 +1,26 @@
+.toasts {
+  font-size: 48px !important;
+  padding: 60px !important;
+}
+.mint-toast-text {
+  font-size: 28px;
+}
+.mint-radiolist .mint-cell {
+  display: inline-block !important;
+}
+.mint-radiolist-title {
+  margin: 0;
+}
+.mint-swipe-indicators .mint-swipe-indicator {
+  display: inline-block;
+  margin: 0 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.6;
+}
+.mint-swipe-indicators .mint-swipe-indicator.is-active {
+  width: 40px;
+  border-radius: 10px;
+}
