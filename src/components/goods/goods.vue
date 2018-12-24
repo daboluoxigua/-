@@ -98,8 +98,6 @@ import axios from "axios";
 import qs from "qs";
 import { Swipe, SwipeItem,Lazyload } from 'mint-ui';
 import BScroll from "better-scroll";
-import navTop from "../nav/navTop.vue";
-import Slider from "../slider/slider.vue"; //banner
 import cartcontrol from "../cartcontrol/cartcontrol.vue"; //购物车
 import shopcart from "../shopcart/shopcart.vue";
 import food from "../food/food.vue";
@@ -149,7 +147,7 @@ export default {
     this.loading=true
     
     axios
-      .post("/../../wx/getDish", qs.stringify(getDish))
+      .post("../../wx/getDish", qs.stringify(getDish))
       .then(res => {
         this.loading=false
         if (res.data.result == 1057) {
@@ -235,7 +233,7 @@ export default {
         probeType: 3
       });
 
-      this.meunScroll.on("scroll", pos => {
+      this.meunScroll.on("scroll", () => {
         this._bannerHS(this.meunScroll);
       });
 
@@ -501,8 +499,6 @@ export default {
   },
   components: {
     loading,
-    navTop,
-    Slider,
     cartcontrol,
     shopcart,
     food,

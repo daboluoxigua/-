@@ -51,13 +51,9 @@
 
 
 <script>
-import navTop from "../nav/navTop.vue";
 import BScroll from "better-scroll";
 
 export default {
-  components: {
-    navTop
-  },
   data() {
     var me = this;
     me.city = me.city || "深圳";

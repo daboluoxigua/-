@@ -117,7 +117,7 @@ export default {
           this.loading = false;
           if(res.data.result == 0){
             this.set_addressInfo(dataList)
-            this.$router.push({ path: "/payPage" });
+            this.$router.go(-2);
           }
         });
     }

@@ -203,8 +203,6 @@ export default {
     padding: 20px;
     width: 100%;
     margin-bottom: 20px;
-    h2 {
-    }
     ul {
       width: 100%;
       text-align: center;

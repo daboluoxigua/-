@@ -39,7 +39,7 @@ export default {
       this.$emit("add", event.target);
       this.$forceUpdate()
     },
-    decreaseCart(event) {
+    decreaseCart() {
       if (this.food.quantity) {
         // this.food.quantity--;
         this.$emit("DeletFood", this.food);

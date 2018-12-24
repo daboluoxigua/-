@@ -45,16 +45,12 @@
 import Vue from "vue";
 import { Toast } from "mint-ui";
 import BScroll from "better-scroll";
-import cartcontrol from "../cartcontrol/cartcontrol.vue";
 
 export default {
   props: {
     selectFoods: {},
     courese:{},
     target:{}
-  },
-  components: {
-    cartcontrol
   },
   data() {
     return {
