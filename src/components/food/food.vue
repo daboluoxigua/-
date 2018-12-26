@@ -2,7 +2,7 @@
   <transition name="move">
     <div v-show="showFlag" class="food">
       <div class="back" @click="hide">
-        <i class="iconfont icon-close2"></i>
+        <i class="iconfont icon-guanbi1"></i>
       </div>
       <div class="foodbox" ref="food">
         <div>
@@ -17,8 +17,9 @@
           <div class="dishName">{{food.dishName}}</div>
           <div class="sales">销量{{food.salesCount}}</div>
           <div class="price">
-            <span>￥{{food.price}}</span>
-            <span>会员价 ￥{{food.memberPrice}}</span>
+            <span>￥{{food.cost}}</span>
+            <span v-if="food.memberPrice && showMemberPrice=='true' && !food.abandonPrice">会员价￥{{food.memberPrice}}</span>
+            <span class='old' v-if="food.abandonPrice"><del>原价￥{{food.abandonPrice}}</del></span>
           </div>
           <cartcontrol @addFood="addFoodList(arguments)" @DeletFood="DeletFood" :food="food"></cartcontrol>
         </div>
@@ -33,9 +34,9 @@
               <img v-else src="../../common/images/no.png">
               <div class="recoInfo">
                 <div class="dishName">{{item.dishName}}</div>
-                <div class="sales"><span>销量{{item.salesCount}}</span>&nbsp;<span v-if="item.memberPrice">会员价￥{{item.memberPrice}}</span></div>
+                <div class="sales"><span>销量{{item.salesCount}}</span>&nbsp;<span v-if="item.memberPrice && showMemberPrice=='true' && !item.abandonPrice">会员价￥{{item.memberPrice}}</span><span class='old' v-if="item.abandonPrice"><del>原价￥{{item.abandonPrice}}</del></span></div>
                 <div class="price">
-                  <span>￥{{item.price}}</span>
+                  <span>￥{{item.cost}}</span>
                 </div>
                 <cartcontrol @addFood="addFoodList(arguments)" @DeletFood="DeletFood" :food="item"></cartcontrol>
               </div>
@@ -62,6 +63,7 @@ export default {
   data() {
     return {
       showFlag: false,
+      showMemberPrice: window.localStorage.getItem("showMemberPrice"),
       foodItems: {},
       optionList: [],
       recommandList: [],
@@ -169,8 +171,8 @@ export default {
   }
 
   .back {
-      line-height: 80px;
-      width: 80px;
+      line-height: 60px;
+      width: 60px;
       color: #999;
       text-align: center;
       position: fixed;
@@ -178,9 +180,12 @@ export default {
       top: 10px;
       z-index: 999;
       .iconfont {
+        color: #fff;
         display: block;
-        font-size: 42px;
+        font-size: 30px;
         text-shadow: 0px 0px 2px #fff;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 10px;
       }
     }
 

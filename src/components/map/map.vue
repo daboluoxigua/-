@@ -84,10 +84,10 @@ export default {
             "amap-copyright"
           )[0].style.visibility = "hidden";
         },
-        movestart: function(e) {
+        movestart: function() {
           document.getElementsByClassName("amap-icon")[0].style.top = "-10px";
         },
-        mapmove: function(e) {
+        mapmove: function() {
           var point = this.getCenter();
           me.makerConf.position = [point.lng, point.lat];
         },
@@ -113,6 +113,7 @@ export default {
           events: {
             init(o) {
               o.getCurrentPosition((status, result) => {
+                console.log(result)
                 if (result && result.position) {
                   me.zoom = 17;
                   me.lng = result.position.lng;
@@ -142,7 +143,6 @@ export default {
     };
   },
   mounted() {
-    var me = this;
     this.$nextTick(() => {
         if (!this.scroll) {
           this.scroll = new BScroll(this.$refs.adrs, {
@@ -195,11 +195,9 @@ export default {
     },
     onSearchResult(pois) {
       //搜索
-      let latSum = 0;
-      let lngSum = 0;
       var me = this;
 
-      var mymap = me.$refs.map.$$getInstance();
+      me.$refs.map.$$getInstance();
 
       if (pois && pois.length > 0) {
         //如果长度为1则无需转化

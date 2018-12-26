@@ -8,12 +8,12 @@
           <p>终端单号: {{showData.content.refOrderId}}</p>
           <p>就餐方式: {{showData.content.orderTypeStr}}</p>
           <p>下单时间：{{showData.content.createdAtStr}}</p>
-          <p v-if="showData.content.paymentList[0]">支付方式：{{showData.content.paymentList[0].payName}}</p>
+          <p>支付方式：<span v-for="(item,index) in showData.content.paymentList" :key="index">{{item.payName}}{{showData.content.paymentList.length-1 > index ? ',':''}}</span></p>
         </div>
         <div class="order-info">
           <p v-for="(itemList,index) in showData.content.itemList" :key="index">
             <span>{{itemList.dishName}}：</span>
-            <span>￥{{itemList.price}}</span>
+            <span>￥{{itemList.cost}}</span>
             <span>&nbsp;&nbsp;x{{itemList.quantity}}</span>
           </p>
           <p v-if="showData.content.orderTypeStr !== '堂食'">
@@ -23,10 +23,6 @@
           <p>
             <span>优惠金额：</span>
             <span>￥{{(showData.content.total - showData.content.cost).toFixed(2)}}</span>
-          </p>
-          <p>
-            <span>打包费：</span>
-            <span>￥{{showData.content.takeoutFee}}</span>
           </p>
           <p>
             <span>总价：</span>
@@ -130,7 +126,7 @@ export default {
         });
     },
     again() {
-      this.$router.push({path: "/goods"});
+      this.$router.push({ path: "/goods",query:{'time':new Date().getTime()}});
     }
   },
   components: {

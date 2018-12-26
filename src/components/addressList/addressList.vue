@@ -11,7 +11,7 @@
       <div class="roll">
         <div v-if="available.length>0">
           <ul>
-            <li v-if="item" v-for="(item,index) in available" :key="index" @click="addSet(item)">
+            <li v-for="(item,index) in available" :key="index" @click="addSet(item)">
               <div class="address">{{item.address}}</div>
               <div class="detailed">{{item.detail}}</div>
               <div class="name">{{item.customer}} {{item.phone}}</div>
@@ -24,7 +24,7 @@
         <div class="beyond" v-if="beyond.length>0">
           <h2>以下地址超出配送范围</h2>
           <ul>
-            <li v-if="item" v-for="(item,index) in beyond" :key="index">
+            <li v-for="(item,index) in beyond" :key="index">
               <div class="address">{{item.address}}</div>
               <div class="detailed">{{item.detail}}</div>
               <div class="name">{{item.customer}} {{item.phone}}</div>
@@ -53,7 +53,6 @@ import loading from "../loading/loading.vue"; //加载中
 import {mapMutations} from 'vuex'
 export default {
   data() {
-    const self = this;
     return {
       loading: false,
       available: [],
@@ -82,10 +81,7 @@ export default {
         this.$router.go(-1);
         return false;
       }
-      //如果上面都执行了 页面都跳走了，这个也就不用管了
-      setTimeout(() => {
-        this.$router.push({ path: "/" });
-      }, 500);
+      
     },
     getList() {
       this.available = [];

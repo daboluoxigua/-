@@ -12,8 +12,12 @@
                   </div>
                   <div class="info">
                     <h2>{{selectFoods.dishName}}</h2>
-                    <p>已选：{{selectedCustom}}</p>
-                    <span><article v-if="selectFoods.price + totalPrice > 0">￥{{totalPrice > 0 ? totalPrice : selectFoods.price}}</article> <em v-if="selectFoods.memberPrice">会员价{{totalMemberPrice > 0 ? totalMemberPrice : selectFoods.memberPrice}}</em></span>
+                    <p v-show="selectedCustom">已选：{{selectedCustom}}</p>
+                    <span>
+                      <article v-if="selectFoods.price + totalPrice > 0">￥{{(selectFoods.price + totalPrice).toFixed(2)}}</article>
+                      <em v-show="selectFoods.memberPrice && selectFoods.memberPrice + totalMemberPrice > 0 && showMemberPrice == 'true' && !selectFoods.abandonPrice">会员价￥{{selectFoods.memberPrice + totalPrice}}</em>
+                      <em v-if="selectFoods.abandonPrice"><del>原价￥{{selectFoods.abandonPrice}}</del></em>
+                    </span>
                   </div>
                 </div>
                 <div class="config" ref="configcustom">
@@ -54,6 +58,7 @@ export default {
   },
   data() {
     return {
+      showMemberPrice: window.localStorage.getItem("showMemberPrice"),
       showFlag:false,
       isElect: false,
       food: {},
@@ -179,7 +184,7 @@ export default {
           "price":this.totalPrice + this.selectFoods.itemPrice,
           "marketPrice":this.totalPrice + this.selectFoods.itemPrice,
           "marketPriceCost":this.totalPrice + this.selectFoods.itemPrice,//价格可能设置错了
-          "cost":this.selectFoods.memberPrice > 0 && window.localStorage.getItem('userIsMember') == 'true' ? this.totalMemberPrice: this.totalPrice + this.selectFoods.itemPrice,
+          "cost":this.selectFoods.cost + this.totalPrice,
           "waimaiPrice":this.selectFoods.waimaiPrice,//外卖费
           "quantity":this.selectFoods.count,
           "comment":this.selectFoods.comment,
@@ -187,6 +192,7 @@ export default {
           "subItemList":[],
           "marketList":[],
           "unit":this.selectFoods.unit,
+          "dishUnit":this.selectFoods.dishUnit,
           "optionList":optionList,
           "imageName":this.selectFoods.imageName,
           "seq":0
@@ -231,8 +237,8 @@ export default {
         });
       }
 
-      this.totalPrice = parseFloat((this.selectFoods.price + total).toFixed(2))//设置加价
-      this.totalMemberPrice = parseFloat((this.selectFoods.memberPrice + total).toFixed(2))
+      this.totalPrice = parseFloat(total.toFixed(2))//设置加价
+      // this.totalMemberPrice = parseFloat((this.selectFoods.memberPrice + total).toFixed(2))
       
       this.selectedCustom = had.slice(0, had.length - 1);
       this.$forceUpdate();
@@ -337,8 +343,8 @@ export default {
       span {
         color: #f01414;
         font-size: 42px;
-        position: absolute;
-        bottom: 0;
+        margin-top: 20px;
+        display: inline-block;
         article{
           display: inline;margin-right: 10px;
         }

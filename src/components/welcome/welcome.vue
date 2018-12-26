@@ -1,10 +1,10 @@
 <template>
   <div class="hello">
-    <div class="userinfo" v-if="browserName==2">
+    <div class="userinfo">
       <img :src="headimgurl" alt>
       <p>{{nickname}}</p>
     </div>
-    <input type="number" ref="phoneNum" min="11" max="11" placeholder="请输入手机号码" v-else>
+    <input type="number" ref="phoneNum" class='phoneNum' min="11" max="11" placeholder="请输入会员手机号码" v-if="browserName==1">
     <button class="btn" @click="routerTo()">开始点餐</button>
   </div>
 </template>
@@ -69,12 +69,12 @@ export default {
 
 <style scoped lang="less">
 @import "../../common/css/common.less";
-.hello{text-align: center;padding-top: 200*@rem;
+.hello{text-align: center;padding-top: 300*@rem;
   .userinfo{width: 100%;
-    img{width: 150*@rem;height: 150*@rem;border-radius: 50%}
-    p{ color: #000;font-size: 32*@rem}
+    img{width: 200*@rem;height: 200*@rem;border-radius: 50%}
+    p{ color: #000;font-size: 32*@rem; color: #444;margin-top: 10px;}
   }
-
-  .btn{width: 100%;height: 80*@rem;line-height: 80*@rem; background: #ea5a49;font-size: 32*@rem;border-radius: 4*@rem; color: #fff;position:fixed;bottom: 0;left: 0;border: none;}
+  .phoneNum{width: 80%;height: 70px;border: 2px solid #ddd;padding-left: 20px;border-radius: 5px;position: absolute;bottom: 30%;left: 50%;transform: translate(-50%, 0); }
+  .btn{width: 80%;height: 80*@rem;line-height: 80*@rem; background: #ea5a49;font-size: 32*@rem;border-radius: 4*@rem; color: #fff;position:absolute;bottom: 15%;left: 50%;transform: translate(-50%, 0); border: none;}
 }
 </style>

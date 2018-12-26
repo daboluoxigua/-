@@ -1,6 +1,5 @@
 <template>
   <div class="paySuccess">
-    <navTop :title="title"></navTop>
     <div class="wait" v-if="iscomplete">等待厨房接单，请您稍等，请勿随意更换座位
       <div class="spinner">
         <div class="rect1"></div>
@@ -11,20 +10,19 @@
       </div>
     </div>
     <div class="suc" v-else>
-      <!-- <div class="tit">
-            <img src="../../common/images/pay_success.png">
-            <p>下单成功</p>
-      </div>-->
-      <div
-        class="refuse"
-      >{{this.showData.model ? "取餐号" : "餐牌号"}}：{{showData.model ? showData.content.callNumber : showData.content.tableNames}}</div>
-      <div class="order-info" @click="orderInfo">
-        <div class="header">订单信息</div>
-        <p>单号：{{orderid}}</p>
-        <p>终端单号: {{showData.content.refOrderId}}</p>
-        <p>就餐方式: {{showData.content.orderTypeStr}}</p>
-        <p>下单时间：{{showData.content.createdAtStr}}</p>
-        <p>支付方式：{{showData.content.paymentList[0].payName}}</p>
+      <div v-if="detail" class='detail'>{{detail}}</div>
+      <div v-else>
+        <div
+          class="refuse"
+        >{{this.showData.model ? "取餐号" : "餐牌号"}}：{{showData.model ? showData.content.callNumber : showData.content.tableNames}}</div>
+        <div class="order-info" @click="orderInfo">
+          <div class="header">订单信息</div>
+          <p>单号：{{orderid}}</p>
+          <p>终端单号: {{showData.content.refOrderId}}</p>
+          <p>就餐方式: {{showData.content.orderTypeStr}}</p>
+          <p>下单时间：{{showData.content.createdAtStr}}</p>
+          <p>支付方式：<span v-for="(item,index) in showData.content.paymentList" :key="index">{{item.payName}}{{showData.content.paymentList.length-1 > index ? ',':''}}</span></p>
+        </div>
       </div>
       <button class="btn" @click="again">再来一单</button>
     </div>
@@ -35,7 +33,6 @@
 <script>
 import axios from "axios";
 import qs from "qs";
-import navTop from "../nav/navTop.vue";
 import loading from "../loading/loading.vue"; //加载中
 import utils from "../../common/js/utils.js";
 export default {
@@ -43,7 +40,8 @@ export default {
     return {
       loading: false,
       title: window.localStorage.getItem("welcomeSname"),
-      iscomplete: true
+      iscomplete: true,
+      detail:false
     };
   },
   activated() {
@@ -88,6 +86,7 @@ export default {
             } else if (req.content.type == "3") {
               clearInterval(this.timer);
               this.iscomplete = false;
+              this.detail = req.content.detail
               window.sessionStorage.setItem("orderid", this.orderid);
             }
           } else if (req.result == -1) {
@@ -117,6 +116,7 @@ export default {
           if (req.result == 0) {
             this.showData.content = req.content;
             this.getStoreModel();
+            this.iscomplete = true;
           } else {
             alert(req.errmsg);
           }
@@ -144,7 +144,7 @@ export default {
         });
     },
     again() {
-      this.$router.push({ path: "/goods" });
+      this.$router.push({ path: "/goods",query:{'time':new Date().getTime()}});
     },
     orderInfo() {
       this.$router.push({
@@ -160,7 +160,6 @@ export default {
   },
   components: {
     loading,
-    navTop
   }
 };
 </script>
@@ -210,6 +209,7 @@ export default {
       margin: 40px 0 0;
     }
   }
+  .detail{margin-top: 40%;font-size: 30px;}
 }
 </style>
 

@@ -31,7 +31,7 @@ const isTempTime = () => {//判断是否链接过期了
         checkLink(args("tempTime"), (req) => {
             if (!req.data) {
                 alert('链接已过期请重新扫码');
-                setTimeout(function () { WeixinJSBridge.call('closeWindow'); }, 200);
+                // setTimeout(function () { WeixinJSBridge.call('closeWindow'); }, 200);
             } else {
                 getStoreByIdCallback();
             }
@@ -46,7 +46,7 @@ const getWechatAppIDCallBack = () => {
     getWechatAppID(args('appid'), args('brandid'), args('storeid'), args('table'), args('dishtype'), (req) => {
         window.sessionStorage.setItem("appID", req.content.appid);
         window.localStorage.setItem("tableName", req.content.tableName);
-        if (openid) {//吉野家跳转用
+        if (openid) {
             window.sessionStorage.setItem('openid', args('openid'))
             getTableById(args('appid'), args('brandid'), args('storeid'), (req) => {
                 if (req.result == 0) {
@@ -94,7 +94,6 @@ const getStoreByIdCallback = () => {
             window.localStorage.setItem("showMemberPrice", req.data.showMemberPrice);
             window.localStorage.setItem("isPayRecommended", req.data.isPayRecommended);//是否需要推荐
             window.localStorage.setItem("recommend", req.data.recommend);//推荐标题
-
             getWechatAppIDCallBack();
         }
     })

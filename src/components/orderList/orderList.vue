@@ -73,7 +73,7 @@ export default {
         });
     },
     again() {
-      this.$router.push({ path: "/goods"});
+      this.$router.push({ path: "/goods",query:{'time':new Date().getTime()}});
     },
     orderInfo(getorderid) {
       this.$router.push({

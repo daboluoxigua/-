@@ -47,17 +47,17 @@
                   </p>
                 </span>
                 <span class="dishUnit">x{{item.quantity + (item.dishUnit ? item.dishUnit : '')}}</span>
-                <span class="price">￥{{item.price}}</span>
+                <span class="price">￥{{item.cost.toFixed(2)}}</span>
               </li>
-              <li v-if="switchvue !== '堂食'">
-                <span>外带费</span>
+              <li v-if="switchvue !== '堂食' && setState.takeoutFee > 0">
+                <span>打包费</span>
                 <span style="flex: 0 0 87%;text-align: right;">￥{{setState.takeoutFee}}</span>
               </li>
             </ul>
             <h2>
               <div class="left">小计</div>
               <div class="right">
-                <span>￥{{switchvue !== '堂食' ? setState.cost + setState.takeoutFee : setState.cost}}</span>
+                <span>￥{{switchvue !== '堂食' ? (setState.cost + setState.takeoutFee ).toFixed(2) : setState.cost}}</span>
                 <del v-if="setState.discount > 0">￥{{totalPrice}}</del>
               </div>
             </h2>
@@ -78,7 +78,7 @@
               <li>
                 <div class="left">积分余额{{setState.credit}},使用{{creditNum}}</div>
                 <div class="right">
-                  <mt-switch v-model="credit"></mt-switch>
+                  <mt-switch v-model="credit" @change="changeCredit"></mt-switch>
                 </div>
               </li>
               <li>
@@ -114,16 +114,15 @@
 
 <script>
 import wx from "weixin-js-sdk";
-import { mapGetters } from "vuex";
 import BScroll from "better-scroll";
-import { SwitchName, Toast, MessageBox, Radio } from "mint-ui";
+import { Toast, MessageBox, Radio } from "mint-ui";
 import axios from "axios";
 import qs from "qs";
 import coupon from "../coupon/coupon.vue";
 import navTop from "../nav/navTop.vue";
 import loading from "../loading/loading.vue"; //加载中
 import utils from "../../common/js/utils.js";
-import { mapMutations } from "vuex";
+import { mapGetters,mapMutations } from "vuex";
 
 export default {
   props: {
@@ -182,9 +181,10 @@ export default {
       }
     },
     onSetComputer() {
-      this.comTotalPrice =
-        this.setState.cost - (this.couponData.deno ? this.couponData.deno : 0); //抵扣代金券
-
+      this.comTotalPrice = this.setState.cost - (this.couponData.deno ? this.couponData.deno : 0); //抵扣代金券
+      if(this.comTotalPrice < 0){
+        this.comTotalPrice = 0
+      }
       if (this.switchvue == "外带" || this.switchvue == "外卖") {
         this.comTotalPrice += parseInt(this.setState.takeoutFee);
       }
@@ -204,9 +204,9 @@ export default {
       // 抵扣储值余额
       if (this.balance) {
         if (this.setState.balance - this.comTotalPrice <= 0) {
-          this.balanceNum = this.setState.balance;
+          this.balanceNum = this.setState.balance.toFixed(2);
         } else {
-          this.balanceNum = this.comTotalPrice;
+          this.balanceNum = this.comTotalPrice.toFixed(2);
         }
 
         this.comTotalPrice -= this.balanceNum;
@@ -225,41 +225,7 @@ export default {
     switchvue(value) {
       if (value == "外卖") {
         this.totalPrice += this.setState.takeoutFee
-
-        let setnull = true;
-        const dataList = {
-          appid: window.localStorage.getItem("appid"),
-          storeid: window.localStorage.getItem("storeid"),
-          customerid: window.sessionStorage.getItem("openid")
-        };
-        axios
-          .post(
-            "../../wx/getDeliverCustomerInfoByCustomerid",
-            qs.stringify(dataList)
-          )
-          .then(res => {
-            if (res.data.result == 0) {
-              let list = res.data.content;
-              var point = window.localStorage.getItem("point").split(",");
-              if (AMap) {
-                list.forEach(item => {
-                  item.xy = JSON.parse(item.xy);
-                  if (item.xy instanceof Array) {
-                    // 返回 p1 到 p2 间的地面距离，单位：米 设置配送范围 3000米
-                    var dis = AMap.GeometryUtil.distance(point, item.xy);
-                    console.log(item.defaultCheck);
-                    if (dis < 3000 && item.defaultCheck == 1) {
-                      this.set_addressInfo(item);
-                      setnull = false;
-                    }
-                    if (setnull) {
-                      this.set_addressInfo("");
-                    }
-                  }
-                });
-              }
-            }
-          });
+        // this.getAddress()
       }else if(value == "外带"){
         this.totalPrice += this.setState.takeoutFee
       }else{
@@ -272,12 +238,10 @@ export default {
     if(window.localStorage.getItem("saleOut") == 'true'){
       this.modeConfig=['堂食','外带','外卖']
     }
-    
     this.selectFoods = this.get_selectFoods;
     this.totalPrice = this.get_totalPrice;
     this.show();
-
-    
+    this.getAddress();
     //没有值的时候返回到商品页
     if (!this.selectFoods.length > 0) {
       this.$router.push({ path: "/goods" });
@@ -307,27 +271,52 @@ export default {
       if (this.Order.accountMember.coupons.length > 0) {
         this.$refs.coupon.show();
       }
-    },//使用储值卡
+    },//使用积分
+    changeCredit(){
+      if(this.Order.trade_verify !== null){
+        if(this.credit && !this.password && this.Order.accountMember.trade_verify.credit_verify) {
+          MessageBox.prompt("请输入密码")
+            .then(({ value, action }) => {
+              if (value.length > 0) {
+                this.password = value;
+                this.$nextTick(() => {
+                  this.credit = true;
+                });
+                return
+              }
+            })
+            .catch(() => {
+              this.credit = false;
+            });
+            this.$nextTick(() => {
+              this.credit = false;
+            });
+        }
+      }
+    },
+    //使用储值卡
     changeBalance(){
-      if(this.balance) {
-        MessageBox.prompt("请输入密码")
-          .then(({ value, action }) => {
-            if (value.length > 0) {
-              this.password = value;
-              this.$nextTick(() => {
-                this.balance = true;
-              });
-              return
-            }
-          })
-          .catch(() => {
+      if(this.Order.trade_verify !== null){
+        if(this.balance && !this.password && this.Order.accountMember.trade_verify.charge_verify) {
+          MessageBox.prompt("请输入密码")
+            .then(({ value }) => {
+              if (value.length > 0) {
+                this.password = value;
+                this.$nextTick(() => {
+                  this.balance = true;
+                });
+                return
+              }
+            })
+            .catch(() => {
+              this.balance = false;
+            });
+          this.$nextTick(() => {
             this.balance = false;
           });
+        }
+        
       }
-      this.$nextTick(() => {
-        this.balance = false;
-      });
-      
     },
     getcouponData(e) {
       this.couponData = e; //储存卡券信息
@@ -382,18 +371,10 @@ export default {
               enterprise: data.content.enterprise, //是否使用团餐
               discount: data.content.marketDetailStr.toFixed(2), //优惠
               cost: data.content.cost, //实际支付
-              realcoat: data.content.cost, //减去支付方式金 额后的金额  在支付接口需要使用
+              realcoat: data.content.cost.toFixed(2), //减去支付方式金 额后的金额  在支付接口需要使用
               takeoutFee: data.content.takeoutFee, //外带费
-              credit: data.content.accountMember
-                ? data.content.accountMember.credit
-                : 2, //积分
-              balance: data.content.accountMember
-                ? parseFloat(
-                    (
-                      parseInt(data.content.accountMember.balance) / 100
-                    ).toFixed(2)
-                  )
-                : 2, //储值
+              credit: data.content.accountMember ? data.content.accountMember.credit : 2, //积分
+              balance: data.content.accountMember ? parseFloat((parseInt(data.content.accountMember.balance) / 100).toFixed(2)): 2, //储值
               denoCoupon: {
                 word: data.content.accountMember
                   ? "你有" +
@@ -441,6 +422,7 @@ export default {
       } else if (this.switchvue == "外带") {
         var orderType = 1;
       } else if (this.switchvue == "外卖") {
+        console.log(this.get_addressInfo)
         if (!this.get_addressInfo.id) {
           Toast({className: 'toasts',
             message: `请选择收货地址`,
@@ -452,7 +434,6 @@ export default {
 
       const query = this.$route.query;
       let consumeAmount = (this.switchvue == "外带" || this.switchvue == "外卖") ?parseInt(((this.setState.cost+this.setState.takeoutFee) * 100).toFixed(0)) : parseInt((this.setState.cost * 100).toFixed(0)) 
-      console.log((this.switchvue == "外带" || this.switchvue == "外卖"))
       //基础字段
       const obj = {
         appid: utils.getUrlKey("appid"),
@@ -486,7 +467,7 @@ export default {
           ? this.couponData.coupon_ids
           : ""; //卡券ID
         obj.products = this.couponData.products;
-        obj.denoCouponCash = this.couponData.cost;
+        obj.denoCouponCash = this.couponData.deno;
         obj.credit = this.creditNum;
         obj.balance = parseInt((this.balanceNum * 100).toFixed(0));
         obj.password = this.password;
@@ -496,7 +477,6 @@ export default {
       if ((orderType = 2)) {
         obj.deliverCustomerInfoid = this.get_addressInfo.id; //外卖信息id
       }
-
       this.loading = true;
       //下面执行微信支付或者支付宝支付 browserName: 1为支付宝 2为微信
       //微信支付
@@ -521,7 +501,7 @@ export default {
                 package: data.content.package, // 统一支付接口返回的prepay_id参数值，提交格式如：prepay_id=***）
                 signType: data.content.signType, // 签名方式，默认为'SHA1'，使用新版支付需传入'MD5'
                 paySign: data.content.paySign, // 支付签名
-                success: function(res) {
+                success: function() {
                   sessionStorage.setItem("orderType", 1); //0 表示预点， 1表示快餐
                   if (data.content.templateId !== null) {
                     var _redirectUrl = window.location.href;
@@ -529,14 +509,12 @@ export default {
                       "/payPage",
                       "/PaySuccess?orderid=" + netorderid
                     );
-                    console.log(_redirectUrl);
                     _redirectUrl = encodeURIComponent(
                       _redirectUrl.replace(
                         "http://sz.canxingjian.com",
                         "http://www.smarant.com"
                       )
                     );
-                    console.log(_redirectUrl);
                     var _templateId = data.content.templateId;
                     window.location.href =
                       "https://mp.weixin.qq.com/mp/subscribemsg?action=get_confirm&appid=" +
@@ -617,11 +595,17 @@ export default {
             data.result == 3055 ||
             data.result == 1002
           ) {
-            alert(data.errmsg);
+            Toast({className: 'toasts',
+              message: data.errmsg,
+            });
             _this.newFastFoodOrder();
             _this.password = ""; //当密码不正确得时候，把储值密码置为空
+            _this.credit=false;//使用积分状态返回
+            _this.balance = false;//使用积分状态返回
           } else {
-            alert(data.errmsg);
+            Toast({className: 'toasts',
+              message: data.errmsg,
+            });
           }
         });
       } else if (this.browserName == 1) {
@@ -672,7 +656,10 @@ export default {
                       result.resultCode == "6001" ||
                       result.resultCode == "6002"
                     ) {
-                      _this.onCancelPay();
+                      _this.newFastFoodOrder();
+                      _this.password = ""; //当密码不正确得时候，把储值密码置为空
+                      _this.credit=false;//使用积分状态返回
+                      _this.balance = false;//使用积分状态返回
                     }
                   }
                 );
@@ -695,6 +682,43 @@ export default {
       this.$router.push({
         path: "/addressList"
       });
+    },
+    getAddress(){
+      let setnull = true;
+        const dataList = {
+          appid: window.localStorage.getItem("appid"),
+          storeid: window.localStorage.getItem("storeid"),
+          customerid: window.sessionStorage.getItem("openid")
+        };
+        axios
+          .post(
+            "../../wx/getDeliverCustomerInfoByCustomerid",
+            qs.stringify(dataList)
+          )
+          .then(res => {
+            if (res.data.result == 0) {
+              let list = res.data.content;
+              var point = window.localStorage.getItem("point").split(",");
+              if (AMap) {
+                list.forEach(item => {
+                  item.xy = JSON.parse(item.xy);
+                  if (item.xy instanceof Array) {
+                    // 返回 p1 到 p2 间的地面距离，单位：米 设置配送范围 3000米
+                    var dis = AMap.GeometryUtil.distance(point, item.xy);
+                    console.log(item.defaultCheck);
+                    if (dis < 3000 && item.defaultCheck == 1) {
+                      this.set_addressInfo(item);
+                      setnull = false;
+                      console.log('aaa')
+                    }
+                    if (setnull) {
+                      this.set_addressInfo("");
+                    }
+                  }
+                });
+              }
+            }
+          });
     },
 
     //使用优惠码
@@ -757,7 +781,6 @@ export default {
   },
   components: {
     loading,
-    SwitchName,
     coupon,
     navTop
   }

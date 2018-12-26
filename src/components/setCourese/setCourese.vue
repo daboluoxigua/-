@@ -16,11 +16,12 @@
               <span
                 v-for="(items,index) in optionList"
                 :key="index"
-              >{{items.dishName}} {{items.quantity > 1 ? "x" + items.quantity + items.unit : "" }} {{items.price > 0 ? "+￥" + parseFloat((items.price*items.quantity).toFixed(2)) : "" }} /</span>
+              >{{items.dishName}} {{items.quantity > 1 ? "x" + items.quantity + items.unit : "" }} {{items.price > 0 ? "+￥" + (items.price*items.quantity).toFixed(2) : "" }} /</span>
             </p>
             <span class="price">
-              ￥{{(selectFoods.price + totalPrice).toFixed(2)}}
-              <em v-if="showMemberPrice == 'true'">会员价￥{{parseFloat((selectFoods.memberPrice + totalPrice).toFixed(2))}}</em>
+              ￥{{(selectFoods.cost + totalPrice).toFixed(2)}}
+              <em v-if="showMemberPrice == 'true' && !selectFoods.abandonPrice">会员价￥{{(selectFoods.memberPrice + totalPrice).toFixed(2)}}</em>
+              <em v-if="selectFoods.abandonPrice"><del>原价￥{{(selectFoods.abandonPrice + totalPrice).toFixed(2)}}</del></em>
             </span>
           </div>
         </div>
@@ -36,7 +37,7 @@
                   <span
                     @click="_elect(optionset,items,index2)"
                     :class="{'active': optionset.isElect}"
-                  >{{optionset.dishName}} {{optionset.extraCost > 0 ? "￥" + optionset.extraCost : ''}}</span> 
+                  >{{optionset.dishName}} {{optionset.extraCost > 0 ? "+￥" + optionset.extraCost : ''}}</span> 
                   <cartcontrol
                     @DeletFood="DeletFood"
                     @addFood="addFoodNum"
@@ -158,7 +159,7 @@ export default {
         price: this.selectFoods.price + this.totalPrice,
         marketPrice: this.selectFoods.price + this.totalPrice,
         marketPriceCost: this.selectFoods.price + this.totalPrice, //价格可能设置错了
-        cost: this.selectFoods.memberPrice > 0 && window.localStorage.getItem('userIsMember') == 'true' ? this.selectFoods.memberPrice + this.totalPrice :this.selectFoods.price + this.totalPrice,
+        cost: this.selectFoods.cost + this.totalPrice,
         waimaiPrice:this.selectFoods.waimaiPrice,//外卖费
         quantity: this.selectFoods.count,
         comment: this.selectFoods.comment,

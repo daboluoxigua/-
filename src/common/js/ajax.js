@@ -134,7 +134,6 @@ export const weixinAjax = {
                 getOpenidAjax(d)
             })
         }
-
         function getOpenidAjax(d) {
             const req = d.data;
             if (req.result == 0) {
@@ -160,10 +159,7 @@ export const weixinAjax = {
 
 
 var urlLink = '/wxdc/dist/';
-var isProduction = /production/.test(window.location.href);
-if (isProduction) {
-    urlLink = '/wxdc/wxdd/production/';
-}
+
 //微信获取code
 export const weixinCode = (appid, brandid, storeid, dishtype, table, appID) => {
     var url = location.protocol + "//" + window.location.host;
@@ -177,12 +173,12 @@ export const weixinCode = (appid, brandid, storeid, dishtype, table, appID) => {
     // window.location.href = 'https://openauth.alipay.com/oauth2/publicAppAuthorize.htm?app_id=2016030101175068&scope=auth_user&redirect_uri=' + encodeURIComponent(url)            
 }
 
-
 //支付宝获取code wxdd/production/
 export const zhifubaoCode = (appid, brandid, storeid, dishtype, table, appID) => {
     var url = location.protocol + "//" + window.location.host;
-    url += urlLink + "index.html?appid=" + appid + "&brandid=" + parseInt(brandid) + "&storeid=" + parseInt(storeid) + "&dishtype=" + dishtype + "&table=" + table + "&code=1";
-    window.location.href = 'https://openauth.alipay.com/oauth2/publicAppAuthorize.htm?app_id=' + appID + '&scope=auth_user&redirect_uri=' + encodeURIComponent(url)
+    url += urlLink + "index.html?appid=" + appid + "&brandid=" + parseInt(brandid) + "&storeid=" + parseInt(storeid) + "&dishtype=" + dishtype + "&code=1" + "&table=" + table;
+    url = url.replace("#/", "")
+    window.location.href = 'https://openauth.alipay.com/oauth2/publicAppAuthorize.htm?app_id=' + appID + '&scope=auth_user&redirect_uri=' + encodeURIComponent(url) 
 }
 
 

@@ -7,6 +7,8 @@
 }
 .mint-radiolist .mint-cell {
   display: inline-block !important;
+  border: none;
+  background: none;
 }
 .mint-radiolist-title {
   margin: 0;
@@ -23,4 +25,12 @@
 .mint-swipe-indicators .mint-swipe-indicator.is-active {
   width: 40px;
   border-radius: 10px;
+}
+.mint-radio-core {
+  width: 30px;
+  height: 30px;
+}
+.mint-radio-core::after {
+  width: 16px;
+  height: 16px;
 }

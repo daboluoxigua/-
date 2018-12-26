@@ -2,7 +2,7 @@
   <div class="orderList">
     <div class="orderListBox" ref="orderListBox">
       <ul>
-        <li v-for="(item,index) in data" :key="index" @click="orderInfo(item.id)">
+        <li v-for="(item,index) in data" :key="index" @click="orderInfo(item.refNetOrderId)">
           <div>
             <span>
               <b>{{item.itemList[0].dishName}}{{item.itemList.length > 1 ? "等菜品":''}}</b>
@@ -11,7 +11,7 @@
           <div>
             <span>
               <b>订单号:</b>
-              {{item.id}}
+              {{item.refNetOrderId}}
             </span>
             <span>{{item.createdAtStr}}</span>
           </div>
@@ -19,7 +19,7 @@
             <span>
               <b>订单状态:</b>
             </span>
-            <span>{{item.netOrderStatusStr}}</span>
+            <span>{{item.paymentStatusStr}}</span>
           </div>
           <div>
             <span>
@@ -77,21 +77,23 @@ export default {
                 req.content.forEach(element => {
                     window.sessionStorage.setItem("phoneNum", element.memberPhoneNumber);
                 });
-            }
-            this.$nextTick(() => {
-              if (!this.scroll) {
-                this.scroll = new BScroll(this.$refs.orderListBox, {
-                  click: true
+                this.$nextTick(() => {
+                  if (!this.scroll) {
+                    this.scroll = new BScroll(this.$refs.orderListBox, {
+                      click: true
+                    });
+                  }else{
+                    this.scroll.refresh();
+                  }
                 });
-              }
-            });
+            }
           } else {
             alert(req.errmsg);
           }
         });
     },
     again() {
-      this.$router.push({ path: "/goods"});
+      this.$router.push({ path: "/goods",query:{'time':new Date().getTime()}});
     },
     orderInfo(getorderid) {
       this.$router.push({
@@ -114,8 +116,11 @@ export default {
   .orderListBox {
     max-height: calc(100% - 180px);
     overflow: hidden;
+    width: 100%;
+    float: left;
   }
-  ul {
+  ul {width: 100%;
+      display: inline-block;
     li {
       background: #fff;
       box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);

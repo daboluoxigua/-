@@ -3,7 +3,9 @@
     <div class="goodsbox">
       <div class="banner" ref="banner">
         <mt-swipe :auto="4000" class="banner">
-          <mt-swipe-item v-for="(item, index) in banner" :key="index"><img :src="item" alt></mt-swipe-item>
+          <mt-swipe-item v-for="(item, index) in banner" :key="index">
+            <img v-lazy="item">
+          </mt-swipe-item>
         </mt-swipe>
       </div>
       <div class="wrapper" ref="wrapper">
@@ -34,27 +36,18 @@
                   class="food-item"
                 >
                   <div class="icon">
-                    <img
-                      width="57"
-                      height="57"
-                      v-if="food.imageName"
-                      v-lazy="food.imageName"
-                    >
-                    <img
-                      width="57"
-                      height="57"
-                      v-else
-                      src="../../common/images/no.png"
-                    >
+                    <img width="57" height="57" v-if="food.imageName" v-lazy="food.imageName">
+                    <img width="57" height="57" v-else src="../../common/images/no.png">
                   </div>
                   <div class="content">
                     <h2 class="name">{{food.dishName}}</h2>
                     <div class="extra">
                       <span class="count">销量{{food.salesCount}}份</span>
-                      <span v-if="food.memberPrice && showMemberPrice == 'true'">会员价￥{{food.memberPrice}}</span>
+                      <span v-if="food.memberPrice && showMemberPrice == 'true'&& !food.abandonPrice">会员价￥{{food.memberPrice}}</span>
+                      <span class='old' v-if="food.abandonPrice"><del>原价￥{{food.abandonPrice}}</del></span>
                     </div>
                     <div class="price">
-                      <span class="now">￥{{food.price}}</span>
+                      <span class="now">￥{{food.cost}}</span>
                     </div>
                     <div class="cartcontrol-wrapper">
                       <cartcontrol
@@ -72,11 +65,21 @@
       </div>
     </div>
     <!-- 购物车 -->
-    <shopcart ref="shopcart" :data="data" :selectFoods="selectFoods"  @getReco="recommendedGo"></shopcart>
+    <shopcart ref="shopcart" :data="data" :selectFoods="selectFoods" @getReco="recommendedGo"></shopcart>
     <!-- 套餐 -->
-    <setCourese :selectFoods="foodItems" :target="target" @addCustom="addCustom(arguments)" ref="setCourese"></setCourese>
+    <setCourese
+      :selectFoods="foodItems"
+      :target="target"
+      @addCustom="addCustom(arguments)"
+      ref="setCourese"
+    ></setCourese>
     <!-- 定制项 -->
-    <foodcustom :selectFoods="foodItems" :target="target" @addCustom="addCustom(arguments)" ref="foodcustom"></foodcustom>
+    <foodcustom
+      :selectFoods="foodItems"
+      :target="target"
+      @addCustom="addCustom(arguments)"
+      ref="foodcustom"
+    ></foodcustom>
     <!-- 菜品详情 -->
     <food
       @addFood="addFoodList(arguments)"
@@ -86,7 +89,12 @@
       ref="food"
     ></food>
     <!-- 推荐 -->
-    <recommended ref="recommended" :data="data" @addFood="addFoodList(arguments)" @DeletFood="DeletFood"></recommended>
+    <recommended
+      ref="recommended"
+      :data="data"
+      @addFood="addFoodList(arguments)"
+      @DeletFood="DeletFood"
+    ></recommended>
     <loading v-if="loading"></loading>
   </div>
 </template>
@@ -96,72 +104,40 @@ import Vue from "vue";
 import $ from "jquery";
 import axios from "axios";
 import qs from "qs";
-import { Swipe, SwipeItem,Lazyload } from 'mint-ui';
+import { Swipe, SwipeItem, Lazyload,Toast } from "mint-ui";
 import BScroll from "better-scroll";
 import cartcontrol from "../cartcontrol/cartcontrol.vue"; //购物车
 import shopcart from "../shopcart/shopcart.vue";
 import food from "../food/food.vue";
 import setCourese from "../setCourese/setCourese.vue"; //套餐选择
 import foodcustom from "../foodcustom/foodcustom.vue"; //定制项
-import recommended from '../recommended/recommended.vue';//推荐
+import recommended from "../recommended/recommended.vue"; //推荐
 import loading from "../loading/loading.vue"; //加载中
-import utils from '../../common/js/utils.js'
-
+import utils from "../../common/js/utils.js";
+Vue.component(Swipe.name, Swipe)
+Vue.component(SwipeItem.name, SwipeItem)
 export default {
   data() {
     return {
       title: window.localStorage.getItem("welcomeSname"),
-      showMemberPrice:window.localStorage.getItem("showMemberPrice"),
+      showMemberPrice: window.localStorage.getItem("showMemberPrice"),
       data: [],
       goods: [],
       listHeight: [],
       scrollY: 0,
       selectedFood: {},
-      banner: [
-        "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1542347342995&di=0e7e8136341cca94b648935109c27534&imgtype=0&src=http%3A%2F%2Fimgsrc.baidu.com%2Fimgad%2Fpic%2Fitem%2Fdcc451da81cb39dbb8099371db160924aa1830cf.jpg",
-        "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1542347342994&di=00d57184cbd0a0433cb766dce0ddf8a5&imgtype=0&src=http%3A%2F%2Fimgsrc.baidu.com%2Fimgad%2Fpic%2Fitem%2Ff603918fa0ec08fae0b1528f52ee3d6d55fbda61.jpg",
-        "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1542347342994&di=4ca31c6b9bdd339ef93b4d18d859910e&imgtype=0&src=http%3A%2F%2Fimgsrc.baidu.com%2Fimgad%2Fpic%2Fitem%2F4a36acaf2edda3cc382ca40c0ae93901203f92d5.jpg",
-        "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1542347342993&di=f07b045c587fcda79be6101b8e4d58aa&imgtype=0&src=http%3A%2F%2Fimgsrc.baidu.com%2Fimgad%2Fpic%2Fitem%2F4afbfbedab64034feac8af3ca4c379310a551d86.jpg"
-      ],
+      banner: [],
       animate: true,
       foodItems: {},
       foodList: [], //套餐内单品列表
       optionList: [], //定制项
-      target:'',
-      drop:true,
-      loading:false,
+      target: "",
+      drop: true,
+      loading: false
     };
   },
-  mounted() {
-    if(window.localStorage.getItem('allState')){
-      // this.optionList = window.localStorage.getItem('allState')
-    }
-
-    let getDish = {
-      appid:utils.getUrlKey('appid'),
-      brandid:utils.getUrlKey('brandid'),
-      storeid:utils.getUrlKey('storeid'),
-      dishtype:utils.getUrlKey('dishtype'),
-    }
-    getDish.phone = window.sessionStorage.getItem("phoneNum")
-    this.loading=true
-    
-    axios
-      .post("../../wx/getDish", qs.stringify(getDish))
-      .then(res => {
-        this.loading=false
-        if (res.data.result == 1057) {
-          alert('该时段无菜品出售');
-        } else {
-          window.localStorage.setItem('userIsMember', res.data.content.member);
-          this.data = res.data.content.dish;
-            this.$nextTick(() => {
-            this._initScroll();
-            this._calculateHeight();
-          });
-        }
-      })
-    
+  mounted(){
+    this.init()
   },
   computed: {
     currentIndex() {
@@ -182,26 +158,87 @@ export default {
       return foods;
     }
   },
-  watch:{
+  watch: {
     data: {
-　　　　handler(newValue, oldValue) {
-　　　　　　for (let i = 0; i < newValue.length; i++) {
-              if(newValue[i].dishData){
-                let count = 0
-                for (let j = 0; j < newValue[i].dishData.length; j++) {
-                  count += newValue[i].dishData[j].quantity ? newValue[i].dishData[j].quantity : 0
-      　　　　　　}
-                newValue[i].count = count
-              }
-　　　　　　}
-          //菜品缓存
-          window.localStorage.setItem('allState',JSON.stringify(this.optionList))
-          this.$forceUpdate();
-　　　　},
-　　　　deep: true
-　　}
+      handler(newValue, oldValue) {
+        for (let i = 0; i < newValue.length; i++) {
+          if (newValue[i].dishData) {
+            let count = 0;
+            for (let j = 0; j < newValue[i].dishData.length; j++) {
+              count += newValue[i].dishData[j].quantity
+                ? newValue[i].dishData[j].quantity
+                : 0;
+            }
+            newValue[i].count = count;
+          }
+        }
+        //菜品缓存
+        window.localStorage.setItem(
+          "allState",
+          JSON.stringify(this.optionList)
+        );
+        this.$forceUpdate();
+      },
+      deep: true
+    }
   },
   methods: {
+    init(){
+      //初始化状态
+      this.optionList = []
+      this.banner= []
+
+      if (window.localStorage.getItem("allState")) {
+        // this.optionList = window.localStorage.getItem('allState')
+      }
+
+      let getDish = {
+        appid: utils.getUrlKey("appid"),
+        brandid: utils.getUrlKey("brandid"),
+        storeid: utils.getUrlKey("storeid"),
+        dishtype: utils.getUrlKey("dishtype"),
+        sourcetype:2,
+        openid: window.sessionStorage.getItem('openid')
+      };
+      if(window.sessionStorage.getItem("phoneNum")){
+        getDish.phone = window.sessionStorage.getItem("phoneNum");
+      }
+      
+      this.loading = true;
+
+      //获取菜品
+      axios.post("../../wx/getDish", qs.stringify(getDish)).then(res => {
+        this.loading = false;
+        if (res.data.result == 1057) {
+          Toast({className: 'toasts',
+            message:'该时段无菜品出售'
+          });
+        } else {
+          window.localStorage.setItem("userIsMember", res.data.content.appMember);
+          this.data = res.data.content.dish;
+          this.$nextTick(() => {
+            this._initScroll();
+            this._calculateHeight();
+          });
+        }
+      });
+      //获取banner图
+      axios.post("../../api/terminal/getOtherfiles", qs.stringify(getDish)).then(res => {
+        this.loading = false;
+        let data = res.data
+        if(data.result == 0){
+          data.files.forEach(item =>{
+            if(item.filetypeKey == 'AD_IMAGE'){
+              this.banner.push(item.filename)
+            }
+          })
+        }else{
+          Toast({className: 'toasts',
+            message:data.errmsg
+          });
+        }
+      });
+    },
     selectMenu(index, event) {
       if (!event._constructed) {
         return;
@@ -220,12 +257,9 @@ export default {
       this.$refs.food.show();
     },
     addFood(target) {
-
       this._drop(target);
     },
-    _drop(target) {
-      
-    },
+    _drop(target) {},
     _initScroll() {
       //设置滚动
       this.meunScroll = new BScroll(this.$refs.menuWrapper, {
@@ -297,17 +331,16 @@ export default {
       this.meunScroll.scrollToElement(el, 300, 0, -100);
     },
     addFoodList(el) {
-
-      if(el.length > 0){
-        var e = el[0]
-        var target = el[1]
+      if (el.length > 0) {
+        var e = el[0];
+        var target = el[1];
         this.target = target;
-      }else{
-        var e = el
+      } else {
+        var e = el;
       }
-      
+
       this.foodItems = e;
-      
+
       //判断显示套餐内容
       if (e.packageItems !== undefined && e.isPackage == 1) {
         this.$refs.setCourese.show();
@@ -337,15 +370,15 @@ export default {
         imageName: e.imageName,
         dishID: e.dishID,
         dishName: e.dishName,
-        price:  e.price,
-        waimaiPrice:e.waimaiPrice,//外卖费
+        price: e.price,
+        waimaiPrice: e.waimaiPrice, //外卖费
         marketPrice: e.price,
         marketPriceCost: e.price, //价格可能设置错了
-        cost: e.memberPrice > 0 && window.localStorage.getItem('userIsMember') == 'true' ? e.memberPrice :e.price,//如果是会员，并且会员价大于零
+        cost:e.cost, //如果是会员，并且会员价大于零
         quantity: e.quantity,
         comment: e.comment,
         gift: e.gift,
-        dishUnit:e.dishUnit,
+        dishUnit: e.dishUnit,
         subItemList: [],
         marketList: [],
         optionList: [],
@@ -354,15 +387,14 @@ export default {
       this.addCustom(list);
     },
     addCustom(el) {
-      if(el.length > 0){
-        var e = el[0]
-        var target = el[1]
+      var e = el;
+      if (el.length > 0) {
+        var e = el[0];
+        var target = el[1];
         // 体验优化,异步执行下落动画
         this.$nextTick(() => {
           this.$refs.shopcart.drop(target);
         });
-      }else{
-        var e = el
       }
 
       e.add = true;
@@ -375,9 +407,8 @@ export default {
       let index,
         index2,
         index3,
-        index4,
-        index5,
-        index6 = 0;
+        // index4,
+        index5 = 0;
 
       //遍历原始数据和新增数据，
       if (this.optionList.length > 0) {
@@ -394,14 +425,14 @@ export default {
               e.subItemList.length > 0
             ) {
               addPush6 = true;
-            }else{
+            } else {
               console.log("定制项长度不相同");
               addPush3 = true;
               index3 = i;
               if (this.optionList[i].optionList.length == e.optionList.length) {
                 console.log("定制项长度相同");
                 addPush4 = true;
-                index4 = i;
+                // index4 = i;
 
                 for (let j = 0; j < e.optionList.length; j++) {
                   if (
@@ -463,8 +494,8 @@ export default {
       }
     },
     DeletFood(e) {
-      let index, dei;
-      this.optionList.forEach((itme, i, a) => {
+      let index;
+      this.optionList.forEach((itme, i) => {
         if (itme.dishID == e.dishID) {
           index = i; //获得相同数组的最后一个索引
         }
@@ -472,7 +503,7 @@ export default {
 
       //同步原始数据
       this.data.forEach(item => {
-        item.dishData.forEach((item2, i) => {
+        item.dishData.forEach((item2) => {
           if (item2.dishID == e.dishID) {
             let num = item2.quantity - 1;
             Vue.set(item2, "quantity", num);
@@ -487,14 +518,14 @@ export default {
       }
 
       //减到0时从购物车删除
-      this.optionList.forEach((item, i, a) => {
+      this.optionList.forEach((item, i) => {
         if (!item.quantity > 0) {
           this.optionList.splice(i, 1);
         }
       });
     },
-    recommendedGo(el){
-      this.$refs.recommended.show()
+    recommendedGo() {
+      this.$refs.recommended.show();
     }
   },
   components: {
@@ -552,7 +583,7 @@ export default {
         line-height: 30px;
         display: inline-block;
         color: #fff;
-        font-size: 12px
+        font-size: 24px
       }
     }
   }
@@ -618,20 +649,20 @@ export default {
             .old{
               text-decoration: line-through;
               font-size: 10 * 2 * @rem;
-              color: rgb(147, 153, 159);}
+              color: rgb(147, 153, 159);font-weight: normal}
               }
           .cartcontrol-wrapper{
             position: absolute;
             right: 0;
-            bottom: 0px}
+            bottom: -5px}
       }
     }
   }
-  .banner{width: 100%;height: 300*@rem; overflow:hidden;position: relative;
-    img{width: 100%;height: 300*@rem;display: inline-block;}
+  .banner{width: 100%;height: 223*@rem; overflow:hidden;position: relative;
+    img{width: 100%;height: 223*@rem;display: inline-block;}
   }
   .goodsbox{overflow: hidden;width: 100%; height: 100%; position: relative;}
-  .wrapper{display: flex; overflow: hidden; position: absolute;bottom: 0;top:320*@rem;bottom: 96*@rem; width: 100%;margin-top:20*@rem}
+  .wrapper{display: flex; overflow: hidden; position: absolute;bottom: 0;top:223*@rem;bottom: 96*@rem; width: 100%;margin-top:20*@rem}
 }
 
 </style>

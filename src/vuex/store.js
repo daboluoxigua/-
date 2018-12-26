@@ -8,7 +8,8 @@ Vue.use(Vuex)
 const state = {
     selectFoods: {},
     totalPrice:0,
-    addressInfo:{}
+    addressInfo:{},
+    dataInit:true
 }
 //定义mutations，可以传参，用于设置state里的listName
 const mutations = {
@@ -20,6 +21,9 @@ const mutations = {
     },
     set_addressInfo: (state, value) => {
         state.addressInfo = value
+    },
+    set_dataInit: (state, value) => {
+        state.dataInit = value
     }
 }
 //定义getters，用于获取出state里的对象
@@ -32,6 +36,9 @@ const getters = {
     },
     get_addressInfo: state => {
         return state.addressInfo
+    },
+    get_dataInit: state => {
+        return state.dataInit
     }
 }
 

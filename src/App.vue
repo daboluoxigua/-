@@ -11,7 +11,6 @@
 <script>
 import axios from "axios";
 import qs from "qs";
-import navTop from "./components/nav/navTop.vue";
 import init from "./common/js/init";
 import * as AJAX from './common/js/ajax'
 const { getOpenid,getJSParam } = AJAX.weixinAjax
@@ -23,11 +22,8 @@ export default {
       transitionName: "slide-right", // 默认动态路由变化为slide-right
     };
   },
-  components: {
-    navTop
-  },
   watch: {
-    $route(to, from) {
+    $route() {
       let isBack = this.$router.isBack; //  监听路由变化时的状态为前进还是后退
       if (isBack) {
         this.transitionName = "slide-right";
@@ -40,22 +36,22 @@ export default {
   mounted(){
     document.title = window.localStorage.getItem("welcomeSname");
     if(args('code')){
-        getJSParam(args('appid'),args('brandid'),args('storeid'));
-        this.getOpen()
-      }
+      getJSParam(args('appid'),args('brandid'),args('storeid'));
+      this.getOpen()
+    }
   },
   methods:{
     getOpen(){ //获取openid
       if(window.sessionStorage.getItem('openid')){
           this.findOrder();
-      }else { 
+      }else {
           const browserName = window.localStorage.getItem("browserName");
           if(browserName == 1){
-            getOpenid(args('appid'),args('brandid'),args('code'),args('storeid'),this.findOrder)
+            getOpenid(args('appid'),args('brandid'),args('auth_code').replace("#/", ""),args('storeid'),this.findOrder)
           }else if(browserName == 2){
             getOpenid(args('appid'),args('brandid'),args('code'),args('storeid'),this.findOrder)
           }
-        }
+      }
     },
     findOrder(){
       axios.post('../../wx/findOrder', qs.stringify({
@@ -79,7 +75,13 @@ export default {
     },
     onJump(){
       let displayIndex = window.localStorage.getItem('displayIndex');
-      let _query = this.$route.query
+      let str = window.location.href
+      str = str.substring(str.length-9,str.length)
+
+      if(str == 'orderList'){
+        this.$router.replace({path:'/orderList'})
+        return
+      }
       if(displayIndex == 'true'){
         this.$router.replace({path:'/welcome'})
       }else{
@@ -94,7 +96,7 @@ export default {
 <style lang='less'>
 @import "./common/css/reset.css";
 @import "./common/css/common.less";
-@import '//at.alicdn.com/t/font_757601_kobez93ycuj.css';
+@import '//at.alicdn.com/t/font_757601_czyhf2grbp.css';
 .Router {
      position: absolute;
      width: 100%;
