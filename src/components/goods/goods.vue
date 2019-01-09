@@ -36,8 +36,8 @@
                   class="food-item"
                 >
                   <div class="icon">
-                    <img width="57" height="57" v-if="food.imageName" v-lazy="food.imageName">
-                    <img width="57" height="57" v-else src="../../common/images/no.png">
+                    <img v-if="food.imageName" v-lazy="food.imageName">
+                    <img v-else src="../../common/images/no.png">
                   </div>
                   <div class="content">
                     <h2 class="name">{{food.dishName}}</h2>
@@ -137,7 +137,7 @@ export default {
     };
   },
   mounted(){
-    this.init()
+      this.init()
   },
   computed: {
     currentIndex() {
@@ -232,12 +232,18 @@ export default {
               this.banner.push(item.filename)
             }
           })
+          if(!this.banner.length>0){
+            console.log(this.$refs.banner.style.height)
+            this.$refs.banner.style.height = 0;
+            this.$refs.wrapper.style.top = 0;
+          }
         }else{
           Toast({className: 'toasts',
             message:data.errmsg
           });
         }
       });
+
     },
     selectMenu(index, event) {
       if (!event._constructed) {
@@ -370,7 +376,8 @@ export default {
         imageName: e.imageName,
         dishID: e.dishID,
         dishName: e.dishName,
-        price: e.price,
+        price: e.abandonPrice ? e.abandonPrice:e.price,
+        takeFee:e.waiDai_cost,//打包费
         waimaiPrice: e.waimaiPrice, //外卖费
         marketPrice: e.price,
         marketPriceCost: e.price, //价格可能设置错了
@@ -611,8 +618,8 @@ export default {
         flex: 0 0 57 * 2 * @rem;
         margin-right: 10 * 2 * @rem;
         img {
-          width: 120 * @rem;
-          height: 120 * @rem;
+          max-width: 120 * @rem;
+          max-height: 120 * @rem;
         }
       }
       .content {

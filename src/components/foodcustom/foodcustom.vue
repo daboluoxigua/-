@@ -15,8 +15,8 @@
                     <p v-show="selectedCustom">已选：{{selectedCustom}}</p>
                     <span>
                       <article v-if="selectFoods.price + totalPrice > 0">￥{{(selectFoods.price + totalPrice).toFixed(2)}}</article>
-                      <em v-show="selectFoods.memberPrice && selectFoods.memberPrice + totalMemberPrice > 0 && showMemberPrice == 'true' && !selectFoods.abandonPrice">会员价￥{{selectFoods.memberPrice + totalPrice}}</em>
-                      <em v-if="selectFoods.abandonPrice"><del>原价￥{{selectFoods.abandonPrice}}</del></em>
+                      <em v-show="selectFoods.memberPrice && selectFoods.memberPrice + totalMemberPrice > 0 && showMemberPrice == 'true' && !selectFoods.abandonPrice">会员价￥{{(selectFoods.memberPrice + totalPrice).toFixed(2)}}</em>
+                      <em v-if="selectFoods.abandonPrice"><del>原价￥{{(selectFoods.abandonPrice + totalPrice).toFixed(2)}}</del></em>
                     </span>
                   </div>
                 </div>
@@ -177,15 +177,25 @@ export default {
         });
       }
       this.selectFoods.itemPrice = this.selectFoods.itemPrice ? this.selectFoods.itemPrice : 0
+      
+      let price = price =>{
+        if(this.selectFoods.abandonPrice){
+          return this.selectFoods.abandonPrice
+        }else{
+          return this.selectFoods.price ? this.selectFoods.price : 0
+        }
+      }
       let list = {
           "dishKind":this.selectFoods.dishKind,
           "dishID":this.selectFoods.dishID,
           "dishName":this.selectFoods.dishName,
-          "price":this.totalPrice + this.selectFoods.itemPrice,
+          "price":price(),//原价
           "marketPrice":this.totalPrice + this.selectFoods.itemPrice,
           "marketPriceCost":this.totalPrice + this.selectFoods.itemPrice,//价格可能设置错了
+          "itemPrice":this.selectFoods.itemPrice+this.totalPrice,
           "cost":this.selectFoods.cost + this.totalPrice,
           "waimaiPrice":this.selectFoods.waimaiPrice,//外卖费
+          "takeFee":this.selectFoods.waiDai_cost,//打包费
           "quantity":this.selectFoods.count,
           "comment":this.selectFoods.comment,
           "gift":this.selectFoods.gift,
@@ -197,6 +207,7 @@ export default {
           "imageName":this.selectFoods.imageName,
           "seq":0
         }
+        console.log(list)
       this.$emit('addCustom', list,this.target);
       this.hide();
     },

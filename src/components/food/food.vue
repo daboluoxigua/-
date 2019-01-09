@@ -17,7 +17,7 @@
           <div class="dishName">{{food.dishName}}</div>
           <div class="sales">销量{{food.salesCount}}</div>
           <div class="price">
-            <span>￥{{food.cost}}</span>
+            <span><b>￥</b>{{food.cost}}</span>
             <span v-if="food.memberPrice && showMemberPrice=='true' && !food.abandonPrice">会员价￥{{food.memberPrice}}</span>
             <span class='old' v-if="food.abandonPrice"><del>原价￥{{food.abandonPrice}}</del></span>
           </div>
@@ -162,7 +162,7 @@ export default {
     position: relative;
     width: 100%;
     max-height: 562px;
-
+    text-align: center;
     img {
       max-width: 750px;
       max-height: 562px;
@@ -175,7 +175,7 @@ export default {
       width: 60px;
       color: #999;
       text-align: center;
-      position: fixed;
+      position:absolute;
       right: 10px;
       top: 10px;
       z-index: 999;
@@ -237,17 +237,16 @@ export default {
       font-size: 32px;
       margin-bottom: 20px;
     }
-    ul {width: 100%; text-align: center;
+    ul {width: 100%; text-align: center; column-count: 2;column-gap: 2;display: inline-block;
       li {
-        display: inline-block;
-        width: 325px;
+        // display: inline-block;
+        break-inside: avoid;
         border-radius: 5px;
         position: relative;
         margin-bottom: 20px;
         border-radius: 10px;
-        overflow: hidden;
         box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
-        img {width: 100%;height: 325px;margin-bottom: 20px}
+        img {width: 100%;margin-bottom: 20px}
         .recoInfo{padding: 0 10px 20px;position: relative;
           div{ text-align: left;line-height: 42px;}
           .dishName{font-size: 28px;height: 40px; overflow: hidden; font-weight: bold;margin-bottom: 5px}
@@ -259,9 +258,9 @@ export default {
           .cartcontrol{position: absolute;right: 10px;bottom: 0px;line-height: 30px;}
         }
       }
-      li:nth-child(odd) {
-        margin-right: 40px;
-      }
+      // li:nth-child(odd) {
+      //   margin-right: 40px;
+      // }
     }
   }
 }

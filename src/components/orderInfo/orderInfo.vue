@@ -13,16 +13,17 @@
         <div class="order-info">
           <p v-for="(itemList,index) in showData.content.itemList" :key="index">
             <span>{{itemList.dishName}}：</span>
-            <span>￥{{itemList.cost}}</span>
-            <span>&nbsp;&nbsp;x{{itemList.quantity}}</span>
+            <span>￥{{showData.content.orderTypeStr !== '堂食' ? (itemList.cost-itemList.takeFee).toFixed(2) : itemList.cost}}&nbsp;&nbsp;&nbsp;&nbsp;<del v-if="itemList.price !== itemList.cost" style='color:#999'>原价￥{{itemList.price}}</del></span>
+            <span style='float: right;'>&nbsp;&nbsp;x{{itemList.quantity}}</span>
           </p>
-          <p v-if="showData.content.orderTypeStr !== '堂食'">
+          <p v-if="showData.content.takeoutFee > 0 && showData.content.orderTypeStr !== '堂食'">
             <span>打包费：</span>
             <span>￥{{showData.content.takeoutFee}}</span>
           </p>
-          <p>
+          
+          <p v-if="showData.content.marketDetailStr > 0">
             <span>优惠金额：</span>
-            <span>￥{{(showData.content.total - showData.content.cost).toFixed(2)}}</span>
+            <span>￥{{showData.content.marketDetailStr}}</span>
           </p>
           <p>
             <span>总价：</span>
@@ -31,6 +32,20 @@
           <p>
             <span>实付：</span>
             <span>￥{{showData.content.cost}}</span>
+          </p>
+        </div>
+        <div class="order-info" v-if="showData.content.deliverCustomerInfo">
+          <p>
+            <span>收货人：</span>
+            <span>{{showData.content.deliverCustomerInfo.customer}}</span>
+          </p>
+          <p>
+            <span>联系电话：</span>
+            <span>{{showData.content.deliverCustomerInfo.phone}}</span>
+          </p>
+          <p>
+            <span>地址：</span>
+            <span>{{showData.content.deliverCustomerInfo.address + showData.content.deliverCustomerInfo.detail}}</span>
           </p>
         </div>
       </div>
@@ -43,7 +58,6 @@
 <script>
 import axios from "axios";
 import qs from "qs";
-import navTop from "../nav/navTop.vue";
 import loading from "../loading/loading.vue"; //加载中
 import BScroll from "better-scroll";
 export default {

@@ -117,7 +117,9 @@ export default {
           this.loading = false;
           if(res.data.result == 0){
             this.set_addressInfo(dataList)
-            this.$router.go(-2);
+            setTimeout(()=>{
+              this.$router.go(-2);
+            },500)
           }
         });
     }

@@ -138,7 +138,10 @@ export default {
     addSet(item){
       this.update(item)//更新选中的地址
       this.set_addressInfo(item)//赋值vuex
-      this.$router.go(-1);
+      setTimeout(()=>{
+        this.$router.go(-1);
+      },500)
+      
     },
     update(item){
       item.defaultCheck=1;

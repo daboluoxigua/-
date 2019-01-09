@@ -92,19 +92,12 @@ export default {
       transmission: "",
       storageItems: "", //储存当前选中的菜品的所在列表
       storageMaxitemCount: "", //储存当前选中的菜品的所在列表最大可选
-      maxitemCount: 0
+      maxitemCount: 0,
+      totalPrice:0,
     };
   },
   computed: {
-    totalPrice() {
-      //统计价格
-      let total = 0;
-      this.optionList.forEach(items =>{
-        total += items.quantity * (items.price > 0 ? items.price : 0)
-      })
-
-      return parseFloat(total.toFixed(2));
-    }
+    
   },
   methods: {
     show() {
@@ -121,6 +114,7 @@ export default {
       });
     },
     hide() {
+      this.totalPrice=0;
       this.showFlag = false;
       this.$forceUpdate();
     },
@@ -151,15 +145,16 @@ export default {
         this.selectFoods.quantity++;
       }
       Vue.set(this.selectFoods, "count", 1);
-
+      let price = this.selectFoods.abandonPrice ? this.selectFoods.abandonPrice:this.selectFoods.price
       let list = {
         dishKind: this.selectFoods.dishKind,
         dishID: this.selectFoods.dishID,
         dishName: this.selectFoods.dishName,
-        price: this.selectFoods.price + this.totalPrice,
+        price:price + this.totalPrice,//原价,
         marketPrice: this.selectFoods.price + this.totalPrice,
         marketPriceCost: this.selectFoods.price + this.totalPrice, //价格可能设置错了
         cost: this.selectFoods.cost + this.totalPrice,
+        takeFee:this.selectFoods.waiDai_cost,//打包费
         waimaiPrice:this.selectFoods.waimaiPrice,//外卖费
         quantity: this.selectFoods.count,
         comment: this.selectFoods.comment,
@@ -169,6 +164,7 @@ export default {
         optionList: [],
         seq: 0
       };
+      console.log(list)
       this.$emit("addCustom", list,this.target);
       // this.newFood = list;
 
@@ -186,6 +182,7 @@ export default {
         cost:  e.memberPrice > 0 && window.localStorage.getItem('userIsMember') == 'true' ? e.memberPrice :e.price,
         quantity: 1,
         waimaiPrice:e.waimaiPrice,//外卖费
+        takeFee:e.waiDai_cost,//打包费
         marketExtraPrice: null,
         comment: e.comment,
         // "gift":e.gift,
@@ -202,7 +199,7 @@ export default {
       if (this.storageItems) {
         if (this.storageItems.itemCount == 1) {
           //单选
-          this.storageItems.options.forEach((element, i, arr) => {
+          this.storageItems.options.forEach((element, i) => {
             //再次点击当前选择的时候不赋值
             if (i == this.index) {
               element.quantity = 1;
@@ -358,7 +355,7 @@ export default {
       //不弹出定制项执行下面的代码---------------------------------------------
       //单选时
       if (items.itemCount == 1) {
-        items.options.forEach((element, i, arr) => {
+        items.options.forEach((element, i) => {
           //再次点击当前选择的时候不赋值
           if (i == index) {
             element.quantity = 1;
@@ -387,6 +384,7 @@ export default {
       this.addOdd(e);
     }, //最多可选
     isMax(e, items, index) {
+      this.setTotalPrice();
       if (!items) {
         this.selectFoods.packageItems.forEach(item => {
           if (item.itemCount > 1) {
@@ -431,7 +429,7 @@ export default {
     addFoodNum(e) {
       this.isMax(e);
       let index;
-      this.optionList.forEach((itme, i, a) => {
+      this.optionList.forEach((itme, i) => {
         if (itme.dishID == e.dishID) {
           index = i; //获得相同数组的最后一个索引
         }
@@ -453,18 +451,16 @@ export default {
     },
     DeletFood(e) {
       let index;
-      let dei;
 
       this.isMax(e);
 
-      this.optionList.forEach((itme, i, a) => {
+      this.optionList.forEach((itme, i) => {
         if (itme.dishID == e.dishID) {
           index = i; //获得相同数组的最后一个索引
         }
       });
 
       if (index !== undefined) {
-        console.log(index)
         if (this.optionList[index].quantity > 0) {
           this.optionList[index].quantity--;
           e.quantity = this.optionList[index].quantity
@@ -472,7 +468,7 @@ export default {
       }
 
       //减到0时从购物车删除
-      this.optionList.forEach((item, i, a) => {
+      this.optionList.forEach((item, i) => {
         if (!item.quantity > 0) {
           console.log("已删除菜品", item.dishName);
           this.optionList.splice(i, 1);
@@ -480,7 +476,7 @@ export default {
       });
 
       this.selectFoods.packageItems.forEach(items => {
-        items.options.forEach((e, i, a) => {
+        items.options.forEach((e) => {
           if (!e.quantity > 0) {
             e.isElect = false;
           }
@@ -488,6 +484,14 @@ export default {
       });
       this.$forceUpdate();
       this.isMax(e); //执行完后重新计算最大可选数量
+    },//计算总价
+    setTotalPrice() {
+      //统计价格
+      let total = 0;
+      this.optionList.forEach(items =>{
+        total += items.quantity * (items.itemPrice > 0 ? items.itemPrice : 0)
+      })
+      this.totalPrice = parseFloat(total.toFixed(2));
     }, //必填项目校验
     validator() {
 

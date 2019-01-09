@@ -57,8 +57,8 @@
             <h2>
               <div class="left">小计</div>
               <div class="right">
-                <span>￥{{switchvue !== '堂食' ? (setState.cost + setState.takeoutFee ).toFixed(2) : setState.cost}}</span>
-                <del v-if="setState.discount > 0">￥{{totalPrice}}</del>
+                <span>￥{{switchvue !== '堂食' ? (setState.cost + setState.takeoutFee).toFixed(2) : setState.cost}}</span>
+                <del v-if="setState.discount > 0">￥{{totalPrice.toFixed(2)}}</del>
               </div>
             </h2>
           </div>
@@ -82,7 +82,7 @@
                 </div>
               </li>
               <li>
-                <div class="left">储值余额￥{{setState.balance}},使用{{balanceNum}}</div>
+                <div class="left">储值余额￥{{setState.balance}},使用{{balanceNum.toFixed(2)}}</div>
                 <div class="right">
                   <mt-switch v-model="balance" @change="changeBalance"></mt-switch>
                 </div>
@@ -180,13 +180,13 @@ export default {
         return false;
       }
     },
-    onSetComputer() {
+    onSetComputer(){
       this.comTotalPrice = this.setState.cost - (this.couponData.deno ? this.couponData.deno : 0); //抵扣代金券
       if(this.comTotalPrice < 0){
         this.comTotalPrice = 0
       }
       if (this.switchvue == "外带" || this.switchvue == "外卖") {
-        this.comTotalPrice += parseInt(this.setState.takeoutFee);
+        this.comTotalPrice += this.setState.takeoutFee;
       }
 
       // 抵扣积分
@@ -204,9 +204,9 @@ export default {
       // 抵扣储值余额
       if (this.balance) {
         if (this.setState.balance - this.comTotalPrice <= 0) {
-          this.balanceNum = this.setState.balance.toFixed(2);
+          this.balanceNum = this.setState.balance
         } else {
-          this.balanceNum = this.comTotalPrice.toFixed(2);
+          this.balanceNum = this.comTotalPrice
         }
 
         this.comTotalPrice -= this.balanceNum;
@@ -223,11 +223,8 @@ export default {
   },
   watch: {
     switchvue(value) {
-      if (value == "外卖") {
-        this.totalPrice += this.setState.takeoutFee
-        // this.getAddress()
-      }else if(value == "外带"){
-        this.totalPrice += this.setState.takeoutFee
+      if (value == "外卖" || value == "外带") {
+        this.totalPrice = this.get_totalPrice+this.setState.takeoutFee
       }else{
         this.totalPrice = this.get_totalPrice;
       }
@@ -244,7 +241,7 @@ export default {
     this.getAddress();
     //没有值的时候返回到商品页
     if (!this.selectFoods.length > 0) {
-      this.$router.push({ path: "/goods" });
+      this.$router.replace({ path: "/goods",query:{'time':new Date().getTime()}});
     }
   },
   methods: {
@@ -275,8 +272,16 @@ export default {
     changeCredit(){
       if(this.Order.trade_verify !== null){
         if(this.credit && !this.password && this.Order.accountMember.trade_verify.credit_verify) {
-          MessageBox.prompt("请输入密码")
-            .then(({ value, action }) => {
+          MessageBox({
+              $type:'prompt',
+              title:null,
+              message:'请输入密码',
+              inputPlaceholder: '请输入密码',
+              showCancelButton:true,   //不显示取消按钮
+              inputType:'password',
+              // inputPattern:/^[0-9]{6}$/,    //正则条件
+              showInput:true
+          }).then(({ value }) => {
               if (value.length > 0) {
                 this.password = value;
                 this.$nextTick(() => {
@@ -288,6 +293,7 @@ export default {
             .catch(() => {
               this.credit = false;
             });
+            
             this.$nextTick(() => {
               this.credit = false;
             });
@@ -298,8 +304,16 @@ export default {
     changeBalance(){
       if(this.Order.trade_verify !== null){
         if(this.balance && !this.password && this.Order.accountMember.trade_verify.charge_verify) {
-          MessageBox.prompt("请输入密码")
-            .then(({ value }) => {
+          MessageBox({
+              $type:'prompt',
+              title:null,
+              message:'请输入密码',
+              inputPlaceholder: '请输入密码',
+              showCancelButton:true,   //不显示取消按钮
+              inputType:'password',
+              // inputPattern:/^[0-9]{6}$/,    //正则条件
+              showInput:true
+          }).then(({ value }) => {
               if (value.length > 0) {
                 this.password = value;
                 this.$nextTick(() => {
@@ -327,7 +341,7 @@ export default {
     newFastFoodOrder() {
       const itemList = this.selectFoods;
       const orderdata = {
-        total: this.totalPrice, //整体价格
+        total: this.get_totalPrice, //整体价格
         member: window.localStorage.getItem("userIsMember"),
         source: this.source,
         discount: 0, //折扣率
@@ -339,8 +353,6 @@ export default {
         itemList: itemList //整个购物车
       };
 
-      const userAgent = navigator.userAgent.toLowerCase();
-      const query = this.$route.query;
       let datainfo = {
         appid: utils.getUrlKey("appid"),
         openid: this.openid,
@@ -354,8 +366,7 @@ export default {
       };
 
       this.loading = true;
-      axios
-        .post("../../wx/newFastFoodOrder", qs.stringify(datainfo))
+      axios.post("../../wx/newFastFoodOrder", qs.stringify(datainfo))
         .then(res => {
           this.loading = false;
           const data = res.data;
@@ -388,16 +399,19 @@ export default {
             };
           } else if (data.result == 1123) {
             let str = "";
-            for (var i = data.content.length - 1; i >= 0; i--) {
+            for (let i = data.content.length - 1; i >= 0; i--) {
               str += data.content[i].dishName + ",";
             }
             Toast({className: 'toasts',
               message: str + data.errmsg
             });
+            setTimeout(()=>{
+              this.$router.go(-1);
+            },2500)
             this.payFlag = 2; //订单错误
           } else if (data.result == 1110) {
             let str = "";
-            for (var i = data.content.length - 1; i >= 0; i--) {
+            for (let i = data.content.length - 1; i >= 0; i--) {
               str += data.content[i] + ",";
             }
             Toast({className: 'toasts',
@@ -406,34 +420,40 @@ export default {
             this.payFlag = 2; //订单错误
           } else {
             Toast({className: 'toasts',
-              message: str + data.errmsg
+              message: data.errmsg
             });
             this.payFlag = 2; //订单错误
           }
         });
     },
     onsubmit() {
-      if (this.payFlag !== 1) {
+      if (this.payFlag !== 1 || this.loading) {
         return false;
       }
+      var _orderType = 0;//设置用餐方式
+      var consumeAmount = 0;//实付价格
+      var totalAmount = 0;//总价
 
-      if (this.switchvue == "堂食") {
-        var orderType = 0;
-      } else if (this.switchvue == "外带") {
-        var orderType = 1;
-      } else if (this.switchvue == "外卖") {
-        console.log(this.get_addressInfo)
-        if (!this.get_addressInfo.id) {
-          Toast({className: 'toasts',
-            message: `请选择收货地址`,
-          });
-          return false
+      if(this.switchvue == "堂食"){
+        _orderType = 0;
+        consumeAmount = parseInt((this.setState.cost * 100).toFixed(0));
+        totalAmount = parseInt((this.get_totalPrice * 100).toFixed(0));
+      }else{
+        consumeAmount = parseInt(((this.setState.cost+this.setState.takeoutFee) * 100).toFixed(0));
+        totalAmount =  parseInt(((this.get_totalPrice + this.setState.takeoutFee) * 100).toFixed(0));
+        if (this.switchvue == "外带") {
+          _orderType = 1;
+        }else if (this.switchvue == "外卖") {
+          if (!this.get_addressInfo.id) {
+            Toast({className: 'toasts',
+              message: `请选择收货地址`,
+            });
+            return false
+          }
+          _orderType = 2;
         }
-        var orderType = 2;
       }
 
-      const query = this.$route.query;
-      let consumeAmount = (this.switchvue == "外带" || this.switchvue == "外卖") ?parseInt(((this.setState.cost+this.setState.takeoutFee) * 100).toFixed(0)) : parseInt((this.setState.cost * 100).toFixed(0)) 
       //基础字段
       const obj = {
         appid: utils.getUrlKey("appid"),
@@ -441,13 +461,13 @@ export default {
         openid: this.openid,
         clientip: "192.169.1.106",
         orderid: this.Order.id, // 上一个接口的订单id
-        orderType: orderType, //0堂食 1外带 2外卖
-        consumeAmount: consumeAmount, //消费金额（折扣之后）单位: 分
+        orderType: _orderType, //0堂食 1外带 2外卖
         paymentAmount: parseInt((this.onSetComputer * 100).toFixed(0)), //实际付款的钱 单位: 分
-        totalAmount: parseInt((this.totalPrice * 100).toFixed(0)), //总金额 单位: 分
         comment: this.bak, //备注
         bizId: new Date().getTime() //获取时间戳
       };
+      obj.consumeAmount = consumeAmount; //消费金额（折扣之后）单位: 分
+      obj.totalAmount = totalAmount; //总金额 单位: 分
 
       //会员字段
       const accountMember = this.Order.accountMember;
@@ -474,7 +494,7 @@ export default {
         obj.gradeName = accountMember.gradeName;
       }
 
-      if ((orderType = 2)) {
+      if(_orderType == 2){
         obj.deliverCustomerInfoid = this.get_addressInfo.id; //外卖信息id
       }
       this.loading = true;
@@ -535,11 +555,11 @@ export default {
                     });
                   }
                 },
-                cancel: function(res) {
+                cancel: function() {
                   console.log("取消支付");
                   _this.newFastFoodOrder();
                 },
-                fail: function(res) {
+                fail: function() {
                   console.log("支付失败");
                   _this.newFastFoodOrder();
                 }
@@ -602,6 +622,15 @@ export default {
             _this.password = ""; //当密码不正确得时候，把储值密码置为空
             _this.credit=false;//使用积分状态返回
             _this.balance = false;//使用积分状态返回
+          } else if (
+            data.result == 1123
+          ) {
+            Toast({className: 'toasts',
+              message: data.errmsg,
+            });
+            setTimeout(()=>{
+              this.$router.go(-1);
+            },2500)
           } else {
             Toast({className: 'toasts',
               message: data.errmsg,
@@ -611,7 +640,7 @@ export default {
       } else if (this.browserName == 1) {
         let netorderid = this.Order.id;
         obj.userid = this.openid;
-        obj.type = 1; //新版为1
+        obj.type = 3; //3为新版本
         axios
           .post("../../alipay/fastFoodPayOrder", qs.stringify(obj))
           .then(d => {
@@ -635,12 +664,8 @@ export default {
                   }
                 });
               }
-            }
-            if (req.result == -8) {
-              if (
-                this.setState.paymented &&
-                parseFloat(this.setState.realcoat) > 0
-              ) {
+            }else if(req.result == -8) {
+              if ( this.setState.paymented &&  parseFloat(this.setState.realcoat) > 0 ) {
                 AlipayJSBridge.call(
                   "tradePay",
                   { tradeNO: req.content.tradeNO },
@@ -660,6 +685,13 @@ export default {
                       _this.password = ""; //当密码不正确得时候，把储值密码置为空
                       _this.credit=false;//使用积分状态返回
                       _this.balance = false;//使用积分状态返回
+                    }else if (result.resultCode == 1123) {
+                      Toast({className: 'toasts',
+                        message: result.errmsg,
+                      });
+                      setTimeout(()=>{
+                        this.$router.go(-1);
+                      },2500)
                     }
                   }
                 );
@@ -671,6 +703,13 @@ export default {
                   }
                 });
               }
+            }else{
+              Toast({className: 'toasts',
+                message: req.errmsg,
+              });
+              setTimeout(()=>{
+                this.$router.go(-1);
+              },2500)
             }
           });
       }
@@ -698,24 +737,26 @@ export default {
           .then(res => {
             if (res.data.result == 0) {
               let list = res.data.content;
-              var point = window.localStorage.getItem("point").split(",");
-              if (AMap) {
-                list.forEach(item => {
-                  item.xy = JSON.parse(item.xy);
-                  if (item.xy instanceof Array) {
-                    // 返回 p1 到 p2 间的地面距离，单位：米 设置配送范围 3000米
-                    var dis = AMap.GeometryUtil.distance(point, item.xy);
-                    console.log(item.defaultCheck);
-                    if (dis < 3000 && item.defaultCheck == 1) {
-                      this.set_addressInfo(item);
-                      setnull = false;
-                      console.log('aaa')
+              var point = window.localStorage.getItem("point");
+              if(point){
+                point = point.split(",")
+
+                if (AMap) {
+                  list.forEach(item => {
+                    item.xy = JSON.parse(item.xy);
+                    if (item.xy instanceof Array) {
+                      // 返回 p1 到 p2 间的地面距离，单位：米 设置配送范围 3000米
+                      var dis = AMap.GeometryUtil.distance(point, item.xy);
+                      if (dis < 3000 && item.defaultCheck == 1) {
+                        this.set_addressInfo(item);
+                        setnull = false;
+                      }
+                      if (setnull) {
+                        this.set_addressInfo("");
+                      }
                     }
-                    if (setnull) {
-                      this.set_addressInfo("");
-                    }
-                  }
-                });
+                  });
+                }
               }
             }
           });

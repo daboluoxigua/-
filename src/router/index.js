@@ -90,9 +90,5 @@ export default new VueRouter({
       path: '/addressEdit',
       component: resolve => require(['../components/addressEdit/addressEdit.vue'], resolve),
       name: "addressEdit"
-    }, {
-      path: '/map1',
-      component: resolve => require(['../components/map/map1.vue'], resolve),
-      name: "map1"
     }]
 });

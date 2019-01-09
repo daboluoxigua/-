@@ -34,7 +34,6 @@
 import axios from "axios";
 import qs from "qs";
 import loading from "../loading/loading.vue"; //加载中
-import utils from "../../common/js/utils.js";
 export default {
   data() {
     return {
@@ -68,17 +67,13 @@ export default {
         orderid: this.orderid
       };
       this.timer = setInterval(() => {
+        if(this.$route.name !== 'paySuccess'){
+          clearInterval(this.timer);
+          return
+        }
         axios.post("../../wx/checkDeliverd", qs.stringify(infoList)).then(d => {
           const req = d.data;
           if (req.result == 0) {
-            let shoppingCart = this.shoppingCart;
-            shoppingCart = {
-              allprice: 0,
-              allNum: 0,
-              allCommodity: [],
-              numerObj: {},
-              kindNum: {}
-            };
             if (req.content.type == "2") {
               clearInterval(this.timer); //关闭
               window.sessionStorage.setItem("orderid", this.orderid);
@@ -91,12 +86,14 @@ export default {
             }
           } else if (req.result == -1) {
             this.iscomplete = false;
+            clearInterval(this.timer);
+            this.detail = req.content.detail
             window.sessionStorage.setItem("orderid", ""); //清除缓存
           } else {
             alert(req.errmsg);
           }
         });
-      }, 500);
+      }, 1000);
     },
     getOrderByOrderID() {
       //获取订单信息
@@ -209,7 +206,7 @@ export default {
       margin: 40px 0 0;
     }
   }
-  .detail{margin-top: 40%;font-size: 30px;}
+  .detail{margin-top: 40%;margin-bottom: 20%; font-size: 30px;line-height: 48px; color: #444}
 }
 </style>
 

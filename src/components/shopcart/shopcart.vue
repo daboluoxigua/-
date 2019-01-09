@@ -44,10 +44,10 @@
                   <cartcontrol @add="addFood" @addFood="addFoodList" @DeletFood="DeletFood" :food="food"></cartcontrol>
                 </div>
                 <div class="option">
-                    <span v-for="(list,index2) in food.optionList" :key="index2" v-if="food.optionList">
+                    <span v-for="(list,index2) in food.optionList" :key="index2" >
                       {{list.optionName}} <em v-if="list.cost>0">(+￥{{list.cost}})</em>; 
                     </span>
-                    <span v-if="food.subItemList" v-for="(list,index2) in food.subItemList" :key="index2">
+                    <span v-for="(list,index2) in food.subItemList" :key="index2">
                       {{list.dishName}} <em v-if="list.quantity > 1">{{list.quantity}} X {{list.unit}}</em> <em v-if="list.price>0">(+￥{{list.price}})</em>; 
                     </span>
                 </div>
@@ -66,7 +66,6 @@
 <script type="text/ecmascript-6">
   import store from "./../../vuex/store.js";
   import BScroll from 'better-scroll';
-  import math  from 'mathjs';
   import cartcontrol from '../cartcontrol/cartcontrol.vue';
   import {mapMutations} from 'vuex'
   export default {
@@ -188,7 +187,7 @@
         this.selectFoods.splice(0,this.selectFoods.length)
         //同步原始数据
         this.data.forEach(item => {
-          item.dishData.forEach((item2,i) => {
+          item.dishData.forEach(item2 => {
             if(item2.quantity>0){
               item2.quantity=0
             }
@@ -219,7 +218,7 @@
       addFoodList(e){
         //同步原始数据
         this.data.forEach(item => {
-          item.dishData.forEach((item2, i) => {
+          item.dishData.forEach(item2 => {
             if (item2.dishID == e.dishID) {
               item2.quantity++;
             }

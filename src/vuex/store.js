@@ -6,10 +6,11 @@ Vue.use(Vuex)
 
 //定义state，并将listName设置为一个空对象
 const state = {
-    selectFoods: {},
-    totalPrice:0,
-    addressInfo:{},
-    dataInit:true
+    selectFoods: {},//所选菜品
+    totalPrice:0,//菜品总价
+    addressInfo:{},//地址信息
+    dataInit:true,//
+    phoneNum:null//会员手机号码 支付宝用
 }
 //定义mutations，可以传参，用于设置state里的listName
 const mutations = {
@@ -24,6 +25,9 @@ const mutations = {
     },
     set_dataInit: (state, value) => {
         state.dataInit = value
+    },
+    set_phoneNum: (state, value) => {
+        state.phoneNum = value
     }
 }
 //定义getters，用于获取出state里的对象
@@ -39,6 +43,9 @@ const getters = {
     },
     get_dataInit: state => {
         return state.dataInit
+    },
+    get_phoneNum: state => {
+        return state.phoneNum
     }
 }
 

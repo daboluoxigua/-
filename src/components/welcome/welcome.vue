@@ -11,7 +11,6 @@
 
 <script>
 import axios from "axios";
-import qs from "qs";
 export default {
   data(){
     return {
@@ -45,23 +44,31 @@ export default {
               const data = d.data;
               if (data.content != null) {
                 window.sessionStorage.setItem("phoneNum", phoneNum);
-                const repastPopulation = window.localStorage.getItem(
+                let repastPopulation = window.localStorage.getItem(
                   "repastPopulation"
                 );
                 if (repastPopulation && repastPopulation != "false") {
                 } else {
-                  this.$router.replace({path:'/goods'})
+                  this.$nextTick(() => {
+                    this.$router.replace({path:'/goods'})
+                  });
                 }
               } else {
                 alert("请输入正确的会员手机号码");
                 return false;
               }
             });
+        }else{
+          this.$router.push({
+            name: "goods"
+          });
         }
+      }else{
+        this.$router.push({
+          name: "goods"
+        });
       }
-      this.$router.push({
-        name: "goods"
-      });
+      
     }
   }
 };
