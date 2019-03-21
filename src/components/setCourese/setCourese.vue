@@ -12,16 +12,21 @@
           </div>
           <div class="info">
             <h2>{{selectFoods.dishName}}</h2>
-            <p>已选：
+            <p>
+              已选：
               <span
-                v-for="(items,index) in optionList"
+                v-for="(items,index) in subItemList"
                 :key="index"
               >{{items.dishName}} {{items.quantity > 1 ? "x" + items.quantity + items.unit : "" }} {{items.price > 0 ? "+￥" + (items.price*items.quantity).toFixed(2) : "" }} /</span>
             </p>
             <span class="price">
               ￥{{(selectFoods.cost + totalPrice).toFixed(2)}}
-              <em v-if="showMemberPrice == 'true' && !selectFoods.abandonPrice">会员价￥{{(selectFoods.memberPrice + totalPrice).toFixed(2)}}</em>
-              <em v-if="selectFoods.abandonPrice"><del>原价￥{{(selectFoods.abandonPrice + totalPrice).toFixed(2)}}</del></em>
+              <em
+                v-if="showMemberPrice == 'true' && !selectFoods.abandonPrice"
+              >会员价￥{{(selectFoods.memberPrice + totalPrice).toFixed(2)}}</em>
+              <em v-if="selectFoods.abandonPrice">
+                <del>原价￥{{(selectFoods.abandonPrice + totalPrice).toFixed(2)}}</del>
+              </em>
             </span>
           </div>
         </div>
@@ -29,24 +34,33 @@
           <div>
             <div v-for="(items,index) in selectFoods.packageItems" :key="index">
               <div class="title">
-                <span v-if="items.userdefinedName">{{items.userdefinedName + items.itemName.substring(4,items.itemName.length)}}</span>
+                <span
+                  v-if="items.userdefinedName"
+                >{{items.userdefinedName + items.itemName.substring(4,items.itemName.length)}}</span>
                 <span v-else>{{items.itemName}}</span>
               </div>
-              <ul>
-                <li v-for="(optionset,index2) in items.options" :key="index2">
-                  <span
-                    @click="_elect(optionset,items,index2)"
-                    :class="{'active': optionset.isElect}"
-                  >{{optionset.dishName}} {{optionset.extraCost > 0 ? "+￥" + optionset.extraCost : ''}}</span> 
-                  <cartcontrol
-                    @DeletFood="DeletFood"
-                    @addFood="addFoodNum"
-                    :food="optionset"
-                    :itemCount="items.itemCount"
-                    v-if="items.itemCount>1 && optionset.isElect"
-                  ></cartcontrol>
-                </li>
-              </ul>
+              <div class="disContent" ref="disContent">
+                <ul>
+                  <li v-for="(optionset,index2) in items.options" :key="index2">
+                    <span
+                      @tap="_elect(optionset,items,index2,$event)"
+                      :class="{'active': optionset.isElect}"
+                    >
+                    <img v-if="optionset.imageName" :src="optionset.imageName">
+                    <img v-else src="../../common/images/no.png">
+                    <p>{{optionset.dishName}} {{optionset.extraCost > 0 ? "+￥" + optionset.extraCost : ''}}</p>
+                    </span>
+                    <cartcontrol
+                      @DeletFood="DeletFood"
+                      @addFood="addFoodNum"
+                      :food="optionset"
+                      :itemCount="items.itemCount"
+                      v-if="items.itemCount>1 && optionset.isElect"
+                    ></cartcontrol>
+                  </li>
+                </ul>
+              </div>
+              
             </div>
           </div>
         </div>
@@ -69,7 +83,7 @@ import foodcustom from "../foodcustom/foodcustom.vue"; //定制项
 export default {
   props: {
     selectFoods: {},
-    target:{}
+    target: {}
   },
   components: {
     cartcontrol,
@@ -77,67 +91,88 @@ export default {
   },
   data() {
     return {
-      showMemberPrice:window.localStorage.getItem("showMemberPrice"),
-      courese:true,//传值给子组件，判断是否由套餐进入
+      showMemberPrice: window.localStorage.getItem("showMemberPrice"),
+      courese: true, //传值给子组件，判断是否由套餐进入
       showFlag: false,
       isElect: false,
-      food: {},
       numconfigShow: false,
-      current: "",
-      newFood: [], //没用
-      selectConfig: [], //显示已选
       foodItems: {},
-      optionList: [], //已选单品
+      subItemList: [], //已选单品
       index: "",
       transmission: "",
       storageItems: "", //储存当前选中的菜品的所在列表
       storageMaxitemCount: "", //储存当前选中的菜品的所在列表最大可选
       maxitemCount: 0,
-      totalPrice:0,
+      totalPrice: 0,
+      stopOndblclick:true,//防止滚动事件造成双击
     };
   },
-  computed: {
-    
-  },
+  computed: {},
   methods: {
     show() {
       this.showFlag = true;
       this.$nextTick(() => {
         if (!this.scroll) {
           this.scroll = new BScroll(this.$refs.config, {
-            click: true
+            tap: true
           });
         } else {
           this.scroll.refresh();
         }
+
+        if (!this.disContentScroll) {
+          this.$refs.disContent.forEach((item,index) =>{
+            new BScroll(item, {
+              scrollX: true,
+              scrollY:false,
+              tap: true,
+            });
+          })
+          
+        }
+
         this.init();
       });
     },
     hide() {
-      this.totalPrice=0;
+      this.totalPrice = 0;
       this.showFlag = false;
       this.$forceUpdate();
     },
     init() {
-      this.index = '';
-      this.storageItems = '';
-      this.optionList.splice(0, this.optionList.length);
+      this.index = "";
+      this.storageItems = "";
+      this.subItemList.splice(0, this.subItemList.length);
       this.selectFoods.packageItems.forEach(items => {
-        items.options.forEach(options => {
-          options.isElect = false;
-          options.quantity = 0;
+        items.options.forEach((options,index,arr) => {
+            options.isElect = false;
+            options.quantity = 0;
         });
+        if(items.itemCount==1){
+            items.options[0].isElect = true;
+            items.options[0].quantity = 1;
+            this.subItemList.push(items.options[0])
+          };
       });
+      this.defaultShow()
     },
-    _elect(e, items, index) {
-      this.isElectToggle(e, items, index, "");
+    defaultShow(){
+    },
+    _elect(e, items, index,event) {
+      if(this.stopOndblclick){
+        this.stopOndblclick=false
+        this.isElectToggle(e, items, index, "");
+      }else{
+        this.stopOndblclick=true
+      }
+      
     }, //加入到购物车
     addFood() {
       //加入购物车之前先进行必填校验
-      if(!this.validator()){
-        return
+      if (!this.validator()) {
+        return;
       }
-      
+
       //数据加入购物车
       if (!this.selectFoods.quantity) {
         Vue.set(this.selectFoods, "quantity", 1);
@@ -145,56 +180,38 @@ export default {
         this.selectFoods.quantity++;
       }
       Vue.set(this.selectFoods, "count", 1);
-      let price = this.selectFoods.abandonPrice ? this.selectFoods.abandonPrice:this.selectFoods.price
+      let price = this.selectFoods.abandonPrice
+        ? this.selectFoods.abandonPrice
+        : this.selectFoods.price;
+      
+      //为了修复选择套餐内容后别的套餐内容跟着变化
+      let subItemList =[]
+      this.subItemList.forEach(items => {
+        subItemList.push(items)
+      })
+
       let list = {
         dishKind: this.selectFoods.dishKind,
         dishID: this.selectFoods.dishID,
         dishName: this.selectFoods.dishName,
-        price:price + this.totalPrice,//原价,
+        price: price + this.totalPrice, //原价,
         marketPrice: this.selectFoods.price + this.totalPrice,
         marketPriceCost: this.selectFoods.price + this.totalPrice, //价格可能设置错了
         cost: this.selectFoods.cost + this.totalPrice,
-        takeFee:this.selectFoods.waiDai_cost,//打包费
-        waimaiPrice:this.selectFoods.waimaiPrice,//外卖费
+        takeFee: this.selectFoods.waiDai_cost, //打包费
+        waimaiPrice: this.selectFoods.waimaiPrice, //外卖费
         quantity: this.selectFoods.count,
         comment: this.selectFoods.comment,
         gift: this.selectFoods.gift,
-        subItemList: this.optionList,
+        subItemList: subItemList,
         marketList: [],
         optionList: [],
         seq: 0
       };
-      console.log(list)
-      this.$emit("addCustom", list,this.target);
-      // this.newFood = list;
-
+      this.$emit("addCustom", list, this.target);
       this.hide();
     },
-    addFoodList(e) {
-      //不显示就直接数量增加
-      let list = {
-        // "dishKind":e.dishKind,
-        dishID: e.dishID,
-        dishName: e.dishName,
-        price: e.price,
-        // "marketPrice":e.price,
-        // "marketPriceCost":e.price,//价格可能设置错了
-        cost:  e.memberPrice > 0 && window.localStorage.getItem('userIsMember') == 'true' ? e.memberPrice :e.price,
-        quantity: 1,
-        waimaiPrice:e.waimaiPrice,//外卖费
-        takeFee:e.waiDai_cost,//打包费
-        marketExtraPrice: null,
-        comment: e.comment,
-        // "gift":e.gift,
-        // "subItemList":[],
-        // "marketList":[],
-        packageItems: "",
-        optionList: false,
-        imageName: e.imageName
-        // "seq":0
-      };
-      this.addPlural(list);
-    }, //直接添加的/定制项添加
+    //直接添加的/定制项添加
     addOdd(e) {
       if (this.storageItems) {
         if (this.storageItems.itemCount == 1) {
@@ -219,7 +236,7 @@ export default {
       }
 
       let isPush = true;
-      this.optionList.forEach(items => {
+      this.subItemList.forEach(items => {
         if (items.dishID == e.dishID) {
           isPush = false;
           // e.quantity++
@@ -228,106 +245,13 @@ export default {
       if (isPush) {
         e.quantity = 1;
         e.isElect = true;
-        this.optionList.push(e);
+        this.subItemList.push(e);
       }
-
       this.isMax(e); //执行完后重新计算最大可选数量
-    }, //添加到列表
-    addPlural(list) {
-      this.food = list;
-
-      this.Selected(); //显示已选套餐
-
-      let addPush = false;
-      let addPush2 = false;
-      let addPush3 = false;
-      let addPush4 = false;
-      let addPush5 = false;
-      let index = 0;
-      let index2 = 0;
-      let index3 = 0;
-      let index4 = 0;
-      let index5 = 0;
-
-      //遍历原始数据和新增数据，
-      if (this.optionList.length > 0) {
-        addPush = false;
-
-        for (let i = 0; i < this.optionList.length; i++) {
-          if (this.optionList[i].dishID == list.dishID) {
-            console.log("dishID相同");
-            index2 = i;
-            addPush2 = true;
-
-            if (list.optionList) {
-              if (this.optionList[i].length > 0 || list.optionList.length > 0) {
-                console.log("定制项长度大于零");
-                addPush3 = true;
-                index3 = i;
-                if (
-                  this.optionList[i].optionList.length == list.optionList.length
-                ) {
-                  console.log("定制项长度相同");
-                  addPush4 = true;
-                  index4 = i;
-
-                  for (let j = 0; j < list.optionList.length; j++) {
-                    if (
-                      list.optionList[j].id ==
-                      this.optionList[i].optionList[j].id
-                    ) {
-                      addPush5 = true;
-                      index5 = i;
-                      console.log("id相同");
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      } else {
-        addPush = true; //第一次直接添加
-      }
-
-      if (addPush) {
-        this.optionList.push(list);
-      } else {
-        //id相同
-        if (addPush5) {
-          this.optionList[index5].quantity =
-            this.optionList[index5].quantity + 1;
-          return;
-        }
-
-        //定制项长度相同
-        if (addPush4) {
-          list.seq = this.optionList.length;
-          this.optionList.push(list);
-          return;
-        }
-
-        //定制项长度大于零
-        if (addPush3) {
-          list.seq = this.optionList.length;
-          this.optionList.push(list);
-          return;
-        }
-
-        //dishID相同
-        if (addPush2) {
-          this.optionList[index2].quantity =
-            this.optionList[index2].quantity + 1;
-          return;
-        }
-        this.optionList.push(list);
-      }
-    }, //统计已经选择
+    },
+    //统计已经选择
     isElectToggle(e, items, index) {
       this.index = index; //储存点击时候的索引，在弹出定制项后，在单选列表中去除其他选项
-
-      this.isMax(e, items, index);
-
       if (this.isMax(e, items, index) == false) {
         return; //如果超过最大可选
       }
@@ -348,9 +272,11 @@ export default {
             this.DeletFood(e); //删除带定制项
           }
           return false;
+        } else {
+          this.storageItems = "";
         }
-      }else{
-        this.storageItems=""
+      } else {
+        this.storageItems = "";
       }
       //不弹出定制项执行下面的代码---------------------------------------------
       //单选时
@@ -396,9 +322,9 @@ export default {
           }
         });
       }
-
       //可选最大数量
       if (items) {
+        console.log(1111)
         this.maxitemCount = 0;
         items.options.forEach(element => {
           if (element.isElect) {
@@ -409,116 +335,115 @@ export default {
           Vue.set(element, "maxitemCount", this.maxitemCount);
         });
 
-
         //多选时 判断是否超过可选数
         if (!e.isElect) {
           if (items.itemCount !== 1) {
             if (this.maxitemCount == items.itemCount) {
               this.numconfigShow = false;
-              Toast({className: 'toasts',
+              console.log(this.maxitemCount,items.itemCount)
+              Toast({
+                className: "toasts",
                 message: `这类最多只能选${items.itemCount}个哦`
               });
               return false;
             }
           }
         }
-        
       }
-      
     },
     addFoodNum(e) {
       this.isMax(e);
       let index;
-      this.optionList.forEach((itme, i) => {
+      this.subItemList.forEach((itme, i) => {
         if (itme.dishID == e.dishID) {
           index = i; //获得相同数组的最后一个索引
         }
       });
 
       if (index !== undefined) {
-        if (this.optionList[index].quantity > 0) {
-          this.optionList[index].quantity++;
+        if (this.subItemList[index].quantity > 0) {
+          this.subItemList[index].quantity++;
           e.isElect = true;
         }
-        if(e.optionCategoryList){
-          if(e.optionCategoryList.length>0){
+        if (e.optionCategoryList) {
+          if (e.optionCategoryList.length > 0) {
             e.quantity++;
           }
         }
       }
-      this.$forceUpdate()
+      this.$forceUpdate();
       this.isMax(e); //执行完后重新计算最大可选数量
     },
     DeletFood(e) {
       let index;
+      // this.isMax(e);
 
-      this.isMax(e);
-
-      this.optionList.forEach((itme, i) => {
+      this.subItemList.forEach((itme, i) => {
         if (itme.dishID == e.dishID) {
           index = i; //获得相同数组的最后一个索引
         }
       });
 
       if (index !== undefined) {
-        if (this.optionList[index].quantity > 0) {
-          this.optionList[index].quantity--;
-          e.quantity = this.optionList[index].quantity
+        if (this.subItemList[index].quantity > 0) {
+          this.subItemList[index].quantity--;
+          e.quantity = this.subItemList[index].quantity;
         }
       }
 
       //减到0时从购物车删除
-      this.optionList.forEach((item, i) => {
+      this.subItemList.forEach((item, i) => {
         if (!item.quantity > 0) {
           console.log("已删除菜品", item.dishName);
-          this.optionList.splice(i, 1);
+          this.subItemList.splice(i, 1);
         }
       });
 
       this.selectFoods.packageItems.forEach(items => {
-        items.options.forEach((e) => {
+        items.options.forEach(e => {
           if (!e.quantity > 0) {
             e.isElect = false;
           }
         });
       });
       this.$forceUpdate();
-      this.isMax(e); //执行完后重新计算最大可选数量
-    },//计算总价
+      // this.isMax(e); //执行完后重新计算最大可选数量
+    }, //计算总价
     setTotalPrice() {
       //统计价格
       let total = 0;
-      this.optionList.forEach(items =>{
-        total += items.quantity * (items.itemPrice > 0 ? items.itemPrice : 0)
-      })
+      this.subItemList.forEach(items => {
+        total += items.quantity * (items.itemPrice > 0 ? items.itemPrice : 0);
+      });
       this.totalPrice = parseFloat(total.toFixed(2));
     }, //必填项目校验
     validator() {
+      let boolean = true;
 
-        let boolean = true;
-
-        this.selectFoods.packageItems.forEach(item => {
-          if (item.itemCount > 0) {
-            let count = 0
-            item.options.forEach(food => {
-                count += food.quantity
+      this.selectFoods.packageItems.forEach(item => {
+        if (item.itemCount > 0) {
+          let count = 0;
+          item.options.forEach(food => {
+            count += food.quantity;
+          });
+          if (item.itemCount > count) {
+            boolean = false;
+            // let string =
+            Toast({
+              className: "toasts",
+              message: `${
+                item.userdefinedName ? item.userdefinedName : item.itemName
+              },此项还未选完哦~`
             });
-            if(item.itemCount > count){
-              boolean = false
-              // let string =
-              Toast({className: 'toasts',
-                message: `${item.userdefinedName ? item.userdefinedName : item.itemName},此项还未选完哦~`
-              });
-            }
           }
-        });
-
-        if(boolean){
-          return true
-        }else{
-          return false
         }
-        
+      });
+
+      if (boolean) {
+        return true;
+      } else {
+        return false;
+      }
     }
   }
 };
@@ -596,7 +521,7 @@ export default {
       p {
         margin-top: 20px;
         line-height: 35px;
-        max-height: 35*3px;
+        max-height: 35 * 3px;
         overflow: hidden;
       }
       .price {
@@ -623,28 +548,41 @@ export default {
       .title {
         line-height: 90 * @rem;
       }
+      .disContent{width: 100%;
+        ul{display: inline-block;height: 280px;white-space:nowrap;}
+      }
       li {
+        box-sizing: content-box;
         display: inline-block;
+        padding-left: 35 * @rem;
+        position: relative;
         span {
+          box-sizing: content-box;
+          overflow: hidden;
           transition: 0.2s;
-          height: 70 * @rem;
-          line-height: 70 * @rem;
+          width: 160px;
+          border: 1px solid #ddd;
+          border-radius: 15px;
+          padding: 20px;
+          // height: 70 * @rem;
+          // line-height: 70 * @rem;
           display: inline-block;
-          padding: 0 35 * @rem;
           background: #f6f6f6;
-          margin-right: 25 * @rem;
-          margin-bottom: 25 * @rem;
-          border-radius: 5 * @rem;
           &.active {
-            background: #d2ebff;
-            color: #438caf;
+            background: #ea5a49;
+            color: #fff;
             transition: 0.2s;
           }
+          img{width: 160px; height: 160px;}
+          p{text-align:center;margin-top: 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         }
         .cartcontrol {
           display: inline-block;
           vertical-align: middle;
           margin-right: 10px;
+          position: absolute;
+          bottom: -50px;
+          left: 30%;
         }
       }
     }

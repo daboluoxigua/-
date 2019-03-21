@@ -523,7 +523,7 @@ export default {
                 paySign: data.content.paySign, // 支付签名
                 success: function() {
                   sessionStorage.setItem("orderType", 1); //0 表示预点， 1表示快餐
-                  if (data.content.templateId !== null) {
+                  if (data.content.subscribeUrl !== null) {
                     var _redirectUrl = window.location.href;
                     _redirectUrl = _redirectUrl.replace(
                       "/payPage",
@@ -537,10 +537,7 @@ export default {
                     );
                     var _templateId = data.content.templateId;
                     window.location.href =
-                      "https://mp.weixin.qq.com/mp/subscribemsg?action=get_confirm&appid=" +
-                      data.content.appId +
-                      "&scene=887&template_id=" +
-                      _templateId +
+                      data.content.subscribeUrl+
                       "&redirect_url=" +
                       _redirectUrl +
                       "&reserved=" +

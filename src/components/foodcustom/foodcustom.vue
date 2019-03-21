@@ -83,6 +83,7 @@ export default {
   },
   methods: {
     show(){
+      
       this.showFlag = true;
       this.$nextTick(() => {
         if (!this.scroll) {
@@ -95,6 +96,7 @@ export default {
         //设置默认显示
         this.defaultShow()
       });
+      this.$forceUpdate();
     },
     hide() {
       this.showFlag = false;
@@ -207,7 +209,6 @@ export default {
           "imageName":this.selectFoods.imageName,
           "seq":0
         }
-        console.log(list)
       this.$emit('addCustom', list,this.target);
       this.hide();
     },
@@ -240,7 +241,7 @@ export default {
       let total = 0;
       if (this.selectFoods.optionCategoryList) {
         this.selectFoods.optionCategoryList.forEach(items => {
-          items.optionList.forEach((e, i, a) => {
+          items.optionList.forEach((e) => {
             if (e.isElect) {
               total += (e.quantity > 0 ? e.quantity : 0) * (e.price > 0 ? e.price : 0);
             }

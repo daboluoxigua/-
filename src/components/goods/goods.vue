@@ -30,7 +30,7 @@
               <h1 class="title">{{item.kindName}}</h1>
               <ul>
                 <li
-                  @click="selectFood(food,$event)"
+                  @tap="selectFood(food,$event)"
                   v-for="(food, index) in item.dishData"
                   :key="index"
                   class="food-item"
@@ -65,7 +65,7 @@
       </div>
     </div>
     <!-- 购物车 -->
-    <shopcart ref="shopcart" :data="data" :selectFoods="selectFoods" @getReco="recommendedGo"></shopcart>
+    <shopcart ref="shopcart" :data="data" :selectFoods="optionList" @getReco="recommendedGo"></shopcart>
     <!-- 套餐 -->
     <setCourese
       :selectFoods="foodItems"
@@ -152,45 +152,31 @@ export default {
       }
       return 0;
     },
-    selectFoods() {
-      let foods = [];
-      foods = this.optionList;
-      return foods;
-    }
   },
-  watch: {
-    data: {
-      handler(newValue, oldValue) {
-        for (let i = 0; i < newValue.length; i++) {
-          if (newValue[i].dishData) {
-            let count = 0;
-            for (let j = 0; j < newValue[i].dishData.length; j++) {
-              count += newValue[i].dishData[j].quantity
-                ? newValue[i].dishData[j].quantity
-                : 0;
-            }
-            newValue[i].count = count;
-          }
-        }
-        //菜品缓存
-        window.localStorage.setItem(
-          "allState",
-          JSON.stringify(this.optionList)
-        );
-        this.$forceUpdate();
-      },
-      deep: true
-    }
-  },
+  // watch: {
+  //   // data: {
+  //   //   handler(newValue, oldValue) {
+  //   //     for (let i = 0; i < newValue.length; i++) {
+  //   //       if (newValue[i].dishData) {
+  //   //         let count = 0;
+  //   //         for (let j = 0; j < newValue[i].dishData.length; j++) {
+  //   //           count += newValue[i].dishData[j].quantity
+  //   //             ? newValue[i].dishData[j].quantity
+  //   //             : 0;
+  //   //         }
+  //   //         newValue[i].count = count;
+  //   //       }
+  //   //     }
+  //   //     this.$forceUpdate();
+  //   //   },
+  //   //   deep: true
+  //   // }
+  // },
   methods: {
     init(){
       //初始化状态
       this.optionList = []
       this.banner= []
-
-      if (window.localStorage.getItem("allState")) {
-        // this.optionList = window.localStorage.getItem('allState')
-      }
 
       let getDish = {
         appid: utils.getUrlKey("appid"),
@@ -256,9 +242,6 @@ export default {
       this.meunScroll.refresh();
     },
     selectFood(food, event) {
-      if (!event._constructed) {
-        return;
-      }
       this.selectedFood = food;
       this.$refs.food.show();
     },
@@ -278,7 +261,7 @@ export default {
       });
 
       this.foodsScroll = new BScroll(this.$refs.foodsWrapper, {
-        click: true,
+        tap: true,
         probeType: 3
       });
 
@@ -414,7 +397,6 @@ export default {
       let index,
         index2,
         index3,
-        // index4,
         index5 = 0;
 
       //遍历原始数据和新增数据，
@@ -433,30 +415,33 @@ export default {
             ) {
               addPush6 = true;
             } else {
-              console.log("定制项长度不相同");
-              addPush3 = true;
-              index3 = i;
-              if (this.optionList[i].optionList.length == e.optionList.length) {
-                console.log("定制项长度相同");
-                addPush4 = true;
-                // index4 = i;
+              if(e.optionList.length>0){
+                console.log("定制项长度不相同");
+                addPush3 = true;
+                index3 = i;
+                if (this.optionList[i].optionList.length == e.optionList.length) {
+                  console.log("定制项长度相同");
+                  addPush4 = true;
 
-                for (let j = 0; j < e.optionList.length; j++) {
-                  if (
-                    e.optionList[j].id == this.optionList[i].optionList[j].id
-                  ) {
-                    addPush5 = true;
-                    index5 = i;
-                    console.log("id相同");
+                  for (let j = 0; j < e.optionList.length; j++) {
+                    if (
+                      e.optionList[j].id == this.optionList[i].optionList[j].id
+                    ) {
+                      addPush5 = true;
+                      index5 = i;
+                      console.log("id相同");
+                    }
                   }
                 }
               }
+
             }
           }
         }
       } else {
         addPush = true; //第一次直接添加
       }
+
       if (addPush) {
         this.optionList.push(e);
       } else {
@@ -476,11 +461,11 @@ export default {
 
         //定制项长度相同
         if (addPush4) {
-          // e.seq = this.optionList.length;
-          // this.optionList.push(e);
+          e.seq = this.optionList.length;
+          this.optionList.push(e);
 
-          this.optionList[index2].quantity =
-            this.optionList[index2].quantity + 1;
+          // this.optionList[index2].quantity =
+          //   this.optionList[index2].quantity + 1;
           return;
         }
 
@@ -545,6 +530,8 @@ export default {
     recommended
   }
 };
+
+
 </script>
 
 <style scoped lang="less">

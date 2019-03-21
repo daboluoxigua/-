@@ -342,7 +342,7 @@
             line-height: 16*1*$rem
             text-align: center
             border-radius: 16*1*$rem
-            font-size: 9*1*$rem
+            font-size: 12*1*$rem
             font-weight: 700
             color: #fff
             background: rgb(240, 20, 20)

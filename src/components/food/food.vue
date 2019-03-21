@@ -78,7 +78,8 @@ export default {
         this.init();
         if (!this.scroll) {
           this.scroll = new BScroll(this.$refs.food, {
-            click: true
+            click: true,
+            tap: true
           });
         } else {
           this.scroll.refresh();
@@ -246,7 +247,7 @@ export default {
         margin-bottom: 20px;
         border-radius: 10px;
         box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
-        img {width: 100%;margin-bottom: 20px}
+        img {width: 100%;margin-bottom: 20px;border-radius: 10px 10px 0 0;}
         .recoInfo{padding: 0 10px 20px;position: relative;
           div{ text-align: left;line-height: 42px;}
           .dishName{font-size: 28px;height: 40px; overflow: hidden; font-weight: bold;margin-bottom: 5px}

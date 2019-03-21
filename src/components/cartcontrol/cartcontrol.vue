@@ -3,13 +3,13 @@
     <div v-if="food.dishCount == 0" class="shouqing">售罄</div>
     <div v-else>
       <transition name="move">
-        <div class="cart-decrease" v-show="food.quantity>0" @click.stop.prevent="decreaseCart">
+        <div class="cart-decrease" v-show="food.quantity>0" @tap.stop.prevent="decreaseCart">
           <span class="inner iconfont icon-jianhao"></span>
         </div>
       </transition>
       <div class="cart-quantity" v-show="food.quantity>0">{{food.quantity}}</div>
-      <div class="cart-add iconfont icon-jiahao1" v-if="!food.maxitemCount" @click.stop.prevent="addCart"></div>
-      <div class="cart-add iconfont icon-jiahao1" v-if="(itemCount - food.maxitemCount) > 0" @click.stop.prevent="addCart"></div>
+      <div class="cart-add iconfont icon-jiahao1" v-if="!food.maxitemCount" @tap.stop.prevent="addCart"></div>
+      <div class="cart-add iconfont icon-jiahao1" v-if="(itemCount - food.maxitemCount) > 0" @tap.stop.prevent="addCart"></div>
     </div>
   </div>
 </template>
@@ -25,26 +25,48 @@ export default {
       default:1
     },
   },
+  data() {
+    return {
+      stopOndblclick:true
+    }
+  },
   methods: {
     addCart(event) {
-      if (this.food.add) {
-        if (!this.food.quantity) {
-          Vue.set(this.food, "quantity", 1);
-        } else {
-          let num = this.food.quantity+1
-          Vue.set(this.food, "quantity", num);
+      if(this.stopOndblclick){
+        if (this.food.add) {
+          if (!this.food.quantity) {
+            Vue.set(this.food, "quantity", 1);
+          } else {
+            let num = this.food.quantity+1
+            Vue.set(this.food, "quantity", num);
+          }
         }
+        this.$emit("addFood", this.food, event.target);
+        this.$emit("add", event.target);
+        this.$forceUpdate()
+        this.stopOndblclick=false
+      }else{
+        this.stopOndblclick=true
       }
-      this.$emit("addFood", this.food, event.target);
-      this.$emit("add", event.target);
-      this.$forceUpdate()
+      setTimeout(()=>{
+        this.stopOndblclick=true
+      },10)
+      
     },
     decreaseCart() {
-      if (this.food.quantity) {
-        // this.food.quantity--;
-        this.$emit("DeletFood", this.food);
+      if(this.stopOndblclick){
+        if (this.food.quantity) {
+          // this.food.quantity--;
+          this.$emit("DeletFood", this.food);
+        }
+        this.$forceUpdate()
+        this.stopOndblclick=false
+      }else{
+        this.stopOndblclick=true
       }
-      this.$forceUpdate()
+      setTimeout(()=>{
+        this.stopOndblclick=true
+      },10)
     }
   }
 };
