@@ -67,7 +67,8 @@ export default {
       foodItems: {},
       optionList: [],
       recommandList: [],
-      reTxt:''
+      reTxt:'',
+      stopOndblclick:true,//防止滚动事件造成双击
     };
   },
   methods: {
@@ -76,14 +77,17 @@ export default {
       this.$nextTick(() => {
         //设置默认显示
         this.init();
-        if (!this.scroll) {
-          this.scroll = new BScroll(this.$refs.food, {
+        this.scroll = new BScroll(this.$refs.food, {
             click: true,
             tap: true
           });
-        } else {
-          this.scroll.refresh();
-        }
+        // if (!this.scroll) {
+          
+        //   console.log('b')
+        // } else {
+        //   alert('1')
+        //   this.scroll.refresh();
+        // }
       });
     },
     hide() {
@@ -124,11 +128,25 @@ export default {
 
     },
     addFoodList(el) {
-      let [food,target] = el;
-      this.$emit("addFood", food, target);
+      if(this.stopOndblclick == 1){
+        let [food,target] = el;
+        this.$emit("addFood", food, target);
+        this.stopOndblclick++
+      }
+      setTimeout(()=>{
+        this.stopOndblclick=1
+      },20)
+      
     },
     DeletFood(el) {
-      this.$emit("DeletFood", el);
+      if(this.stopOndblclick == 1){
+        this.$emit("DeletFood", el);
+        this.stopOndblclick++
+      }
+      setTimeout(()=>{
+        this.stopOndblclick=1
+      },20)
+      
     }
   },
   components: {
@@ -158,7 +176,7 @@ export default {
   &.move-leave-active {
     transform: translate3d(100%, 0, 0);
   }
-  .foodbox{height: 100%;overflow: hidden;}
+  .foodbox{width: 100%; height: 100%;overflow: hidden;position: relative;z-index: 10;}
   .image-header {
     position: relative;
     width: 100%;
@@ -177,6 +195,7 @@ export default {
       color: #999;
       text-align: center;
       position:absolute;
+      float: right;
       right: 10px;
       top: 10px;
       z-index: 999;
@@ -238,10 +257,10 @@ export default {
       font-size: 32px;
       margin-bottom: 20px;
     }
-    ul {width: 100%; text-align: center; column-count: 2;column-gap: 2;display: inline-block;
+    ul {width: 100%; text-align: center; 
       li {
-        // display: inline-block;
-        break-inside: avoid;
+        width: calc(50% - 15px);
+        float: left;
         border-radius: 5px;
         position: relative;
         margin-bottom: 20px;
@@ -250,7 +269,7 @@ export default {
         img {width: 100%;margin-bottom: 20px;border-radius: 10px 10px 0 0;}
         .recoInfo{padding: 0 10px 20px;position: relative;
           div{ text-align: left;line-height: 42px;}
-          .dishName{font-size: 28px;height: 40px; overflow: hidden; font-weight: bold;margin-bottom: 5px}
+          .dishName{font-size: 28px;height: 40px; overflow: hidden;text-overflow:ellipsis; white-space:nowrap; font-weight: bold;margin-bottom: 5px;}
           .sales{color: #999}
           .price{ color: #f01414;
           font-size: 32px;
@@ -259,9 +278,9 @@ export default {
           .cartcontrol{position: absolute;right: 10px;bottom: 0px;line-height: 30px;}
         }
       }
-      // li:nth-child(odd) {
-      //   margin-right: 40px;
-      // }
+      li:nth-child(even) {
+        float: right;
+      }
     }
   }
 }

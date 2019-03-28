@@ -57,7 +57,7 @@
             <h2>
               <div class="left">小计</div>
               <div class="right">
-                <span>￥{{switchvue !== '堂食' ? (setState.cost + setState.takeoutFee).toFixed(2) : setState.cost}}</span>
+                <span>￥{{switchvue !== '堂食' ? (Number(setState.cost) + setState.takeoutFee).toFixed(2) : setState.cost}}</span>
                 <del v-if="setState.discount > 0">￥{{totalPrice.toFixed(2)}}</del>
               </div>
             </h2>
@@ -381,7 +381,7 @@ export default {
               accountMember: data.content.accountMember, //会员信息
               enterprise: data.content.enterprise, //是否使用团餐
               discount: data.content.marketDetailStr.toFixed(2), //优惠
-              cost: data.content.cost, //实际支付
+              cost: data.content.cost.toFixed(2), //实际支付
               realcoat: data.content.cost.toFixed(2), //减去支付方式金 额后的金额  在支付接口需要使用
               takeoutFee: data.content.takeoutFee, //外带费
               credit: data.content.accountMember ? data.content.accountMember.credit : 2, //积分

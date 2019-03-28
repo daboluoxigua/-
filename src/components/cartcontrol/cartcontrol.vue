@@ -8,8 +8,8 @@
         </div>
       </transition>
       <div class="cart-quantity" v-show="food.quantity>0">{{food.quantity}}</div>
-      <div class="cart-add iconfont icon-jiahao1" v-if="!food.maxitemCount" @tap.stop.prevent="addCart"></div>
-      <div class="cart-add iconfont icon-jiahao1" v-if="(itemCount - food.maxitemCount) > 0" @tap.stop.prevent="addCart"></div>
+      <div class="cart-add iconfont icon-jiahao1 a" v-if="!food.maxitemCount" @tap.stop.prevent="addCart"></div>
+      <div class="cart-add iconfont icon-jiahao1 b" v-if="(itemCount - food.maxitemCount) > 0" @tap.stop.prevent="addCart"></div>
     </div>
   </div>
 </template>
@@ -27,30 +27,28 @@ export default {
   },
   data() {
     return {
-      stopOndblclick:true
+      stopOndblclick:1
     }
   },
   methods: {
     addCart(event) {
       if(this.stopOndblclick){
-        if (this.food.add) {
-          if (!this.food.quantity) {
-            Vue.set(this.food, "quantity", 1);
-          } else {
-            let num = this.food.quantity+1
-            Vue.set(this.food, "quantity", num);
-          }
-        }
+        // if (this.food.add) {
+        //   if (!this.food.quantity) {
+        //     Vue.set(this.food, "quantity", 1);
+        //   } else {
+        //     let num = this.food.quantity+1
+        //     Vue.set(this.food, "quantity", num);
+        //   }
+        // }
         this.$emit("addFood", this.food, event.target);
         this.$emit("add", event.target);
         this.$forceUpdate()
-        this.stopOndblclick=false
-      }else{
-        this.stopOndblclick=true
+        this.stopOndblclick++
       }
       setTimeout(()=>{
-        this.stopOndblclick=true
-      },10)
+        this.stopOndblclick=1
+      },20)
       
     },
     decreaseCart() {
@@ -60,12 +58,10 @@ export default {
           this.$emit("DeletFood", this.food);
         }
         this.$forceUpdate()
-        this.stopOndblclick=false
-      }else{
-        this.stopOndblclick=true
+        this.stopOndblclick++
       }
       setTimeout(()=>{
-        this.stopOndblclick=true
+        this.stopOndblclick=1
       },10)
     }
   }
@@ -85,7 +81,7 @@ export default {
     .inner {
       display: inline-block;
       line-height: 42 * @rem;
-      font-size: 42 * @rem;
+      font-size: 50 * @rem;
       color: rgb(0, 160, 220);
       transition: all 0.4s linear;
       transform: rotate(0);
@@ -117,7 +113,7 @@ export default {
     display: inline-block;
     padding: 6 * @rem;
     line-height: 42 * @rem;
-    font-size: 42 * @rem;
+    font-size: 50 * @rem;
     color: rgb(0, 160, 220);
   }
   .shouqing{line-height: 54px; color: #000;float: left;font-size: 28px;color: #666}

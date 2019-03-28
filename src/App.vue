@@ -34,7 +34,7 @@ export default {
     }
   },
   mounted(){
-    document.title = window.localStorage.getItem("welcomeSname");
+    document.title = window.localStorage.getItem("welcomeSname") ? window.localStorage.getItem("welcomeSname") : '';
     if(args('code')){
       getJSParam(args('appid'),args('brandid'),args('storeid'));
       this.getOpen()

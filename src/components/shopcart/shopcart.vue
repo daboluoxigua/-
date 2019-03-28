@@ -412,7 +412,7 @@
           color: rgb(7, 17, 27)
         .empty
           float: right
-          font-size: 12*1*$rem
+          font-size: 24px
           color: rgb(0, 160, 220)
 
       .list-content
@@ -427,15 +427,15 @@
           border-bottom:rgba(7, 17, 27, 0.1)
           .name
             line-height: 24*1*$rem
-            font-size: 14*1*$rem
+            font-size: 28px
             color: rgb(7, 17, 27)
           .price
             position: absolute
-            right: 90*1*$rem
+            right: 99*1*$rem
             top:50%
             transform :translate(0,-50%)
             line-height: 24*1*$rem
-            font-size: 14*1*$rem
+            font-size: 28px
             font-weight: 700
             color: rgb(240, 20, 20)
           .cartcontrol-wrapper

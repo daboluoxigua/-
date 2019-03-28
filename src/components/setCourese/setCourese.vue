@@ -50,12 +50,13 @@
                     <img v-else src="../../common/images/no.png">
                     <p>{{optionset.dishName}} {{optionset.extraCost > 0 ? "+￥" + optionset.extraCost : ''}}</p>
                     </span>
+
                     <cartcontrol
                       @DeletFood="DeletFood"
                       @addFood="addFoodNum"
                       :food="optionset"
                       :itemCount="items.itemCount"
-                      v-if="items.itemCount>1 && optionset.isElect"
+                      v-if="(items.itemCount>1 && optionset.isElect) && (items.isMust !== 1 && items.itemCount !== items.options.length)"
                     ></cartcontrol>
                   </li>
                 </ul>
@@ -137,34 +138,47 @@ export default {
     hide() {
       this.totalPrice = 0;
       this.showFlag = false;
-      this.$forceUpdate();
     },
     init() {
       this.index = "";
       this.storageItems = "";
-      this.subItemList.splice(0, this.subItemList.length);
+      this.subItemList = new Array();//重置数组
       this.selectFoods.packageItems.forEach(items => {
         items.options.forEach((options,index,arr) => {
-            options.isElect = false;
-            options.quantity = 0;
+            this.$set(options,'isElect',false)
+            this.$set(options,'quantity',0)
         });
         if(items.itemCount==1){
-            items.options[0].isElect = true;
-            items.options[0].quantity = 1;
+            this.$set(items.options[0],'isElect',true)
+            this.$set(items.options[0],'quantity',1)
             this.subItemList.push(items.options[0])
-          };
+        }else if(items.itemCount == items.options.length){
+          for (const key in items.options){
+            //使用set 防止数据不更新
+            this.$set(items.options[key],'isElect',true)
+            this.$set(items.options[key],'quantity',1)
+            this.$set(items.options[key],'maxitemCount',items.options.length)
+            // items.options[key].isElect = true;
+            // items.options[key].quantity = 1;
+            this.subItemList.push(items.options[key])
+          }
+        }
       });
-      this.defaultShow()
-    },
-    defaultShow(){
+      this.setTotalPrice();//计算价格
     },
     _elect(e, items, index,event) {
-      if(this.stopOndblclick){
-        this.stopOndblclick=false
-        this.isElectToggle(e, items, index, "");
-      }else{
-        this.stopOndblclick=true
+      //固定相 且N选N项 禁止点击
+      if(items.isMust == 1 && items.itemCount == items.options.length){
+        return
       }
+      if(this.stopOndblclick == 1){
+        this.isElectToggle(e, items, index, "");
+        console.log('双击111')
+        this.stopOndblclick++
+      }
+      setTimeout(()=>{
+        this.stopOndblclick=1
+      },20)
       
     }, //加入到购物车
     addFood() {
@@ -175,11 +189,11 @@ export default {
 
       //数据加入购物车
       if (!this.selectFoods.quantity) {
-        Vue.set(this.selectFoods, "quantity", 1);
+        this.$set(this.selectFoods, "quantity", 1);
       } else {
         this.selectFoods.quantity++;
       }
-      Vue.set(this.selectFoods, "count", 1);
+      this.$set(this.selectFoods, "count", 1);
       let price = this.selectFoods.abandonPrice
         ? this.selectFoods.abandonPrice
         : this.selectFoods.price;
@@ -204,6 +218,7 @@ export default {
         comment: this.selectFoods.comment,
         gift: this.selectFoods.gift,
         subItemList: subItemList,
+        imageName:this.selectFoods.imageName,
         marketList: [],
         optionList: [],
         seq: 0
@@ -278,6 +293,7 @@ export default {
       } else {
         this.storageItems = "";
       }
+      
       //不弹出定制项执行下面的代码---------------------------------------------
       //单选时
       if (items.itemCount == 1) {
@@ -324,7 +340,6 @@ export default {
       }
       //可选最大数量
       if (items) {
-        console.log(1111)
         this.maxitemCount = 0;
         items.options.forEach(element => {
           if (element.isElect) {
@@ -334,13 +349,11 @@ export default {
         items.options.forEach(element => {
           Vue.set(element, "maxitemCount", this.maxitemCount);
         });
-
         //多选时 判断是否超过可选数
         if (!e.isElect) {
           if (items.itemCount !== 1) {
-            if (this.maxitemCount == items.itemCount) {
+            if (this.maxitemCount >= items.itemCount) {
               this.numconfigShow = false;
-              console.log(this.maxitemCount,items.itemCount)
               Toast({
                 className: "toasts",
                 message: `这类最多只能选${items.itemCount}个哦`
@@ -349,65 +362,85 @@ export default {
             }
           }
         }
+        return true
       }
     },
     addFoodNum(e) {
-      this.isMax(e);
-      let index;
-      this.subItemList.forEach((itme, i) => {
-        if (itme.dishID == e.dishID) {
-          index = i; //获得相同数组的最后一个索引
+      if(this.stopOndblclick == 1){
+        if(!this.isMax(e)){
+          return
         }
-      });
-
-      if (index !== undefined) {
-        if (this.subItemList[index].quantity > 0) {
-          this.subItemList[index].quantity++;
-          e.isElect = true;
-        }
-        if (e.optionCategoryList) {
-          if (e.optionCategoryList.length > 0) {
-            e.quantity++;
-          }
-        }
-      }
-      this.$forceUpdate();
-      this.isMax(e); //执行完后重新计算最大可选数量
-    },
-    DeletFood(e) {
-      let index;
-      // this.isMax(e);
-
-      this.subItemList.forEach((itme, i) => {
-        if (itme.dishID == e.dishID) {
-          index = i; //获得相同数组的最后一个索引
-        }
-      });
-
-      if (index !== undefined) {
-        if (this.subItemList[index].quantity > 0) {
-          this.subItemList[index].quantity--;
-          e.quantity = this.subItemList[index].quantity;
-        }
-      }
-
-      //减到0时从购物车删除
-      this.subItemList.forEach((item, i) => {
-        if (!item.quantity > 0) {
-          console.log("已删除菜品", item.dishName);
-          this.subItemList.splice(i, 1);
-        }
-      });
-
-      this.selectFoods.packageItems.forEach(items => {
-        items.options.forEach(e => {
-          if (!e.quantity > 0) {
-            e.isElect = false;
+        this.stopOndblclick++
+        console.log('双击1')
+      
+        let index;
+        this.subItemList.forEach((itme, i) => {
+          if (itme.dishID == e.dishID) {
+            index = i; //获得相同数组的最后一个索引
           }
         });
-      });
-      this.$forceUpdate();
-      // this.isMax(e); //执行完后重新计算最大可选数量
+        
+        if (index !== undefined) {
+          if (this.subItemList[index].quantity > 0) {
+            this.subItemList[index].quantity++;
+            e.quantity=this.subItemList[index].quantity
+          }
+          // if(e.optionCategoryList) {
+          //   if (e.optionCategoryList.length > 0) {
+          //     e.quantity++;
+          //     console.log('b')
+          //   }
+          // }
+        }
+        this.$forceUpdate();
+        this.isMax(e); //执行完后重新计算最大可选数量
+      }
+      setTimeout(()=>{
+        this.stopOndblclick=1
+      },20)
+    },
+    DeletFood(e) {
+      if(this.stopOndblclick == 1){
+        this.stopOndblclick++
+      
+
+        let index;
+        // this.isMax(e);
+        this.subItemList.forEach((itme, i) => {
+          if (itme.dishID == e.dishID) {
+            index = i; //获得相同数组的最后一个索引
+          }
+        });
+
+        if (index !== undefined) {
+          if (this.subItemList[index].quantity > 0) {
+            this.subItemList[index].quantity--;
+            e.quantity = this.subItemList[index].quantity;
+          }
+        }
+
+        //减到0时从购物车删除
+        this.subItemList.forEach((item, i,arr) => {
+          if (!item.quantity > 0) {
+            console.log("已删除菜品", item.dishName);
+            this.subItemList.splice(i, 1);
+          }
+        });
+
+        this.selectFoods.packageItems.forEach(items => {
+          items.options.forEach(e => {
+            if (!e.quantity > 0) {
+              e.isElect = false;
+            }
+          });
+        });
+        this.$forceUpdate();
+        this.isMax(e); //执行完后重新计算最大可选数量
+      }
+
+      setTimeout(()=>{
+        this.stopOndblclick=1
+      },20)
     }, //计算总价
     setTotalPrice() {
       //统计价格
@@ -517,6 +550,7 @@ export default {
       h2 {
         color: #333;
         font-size: 36 * @rem;
+        margin-top: 5px;
       }
       p {
         margin-top: 20px;
@@ -544,6 +578,7 @@ export default {
     margin-bottom: 30px;
     margin-top: 30px;
     height: calc(100% - 420px);
+    > div > div:last-of-type{padding-bottom: 40px;}
     > div > div {
       .title {
         line-height: 90 * @rem;
@@ -581,7 +616,7 @@ export default {
           vertical-align: middle;
           margin-right: 10px;
           position: absolute;
-          bottom: -50px;
+          bottom: -60px;
           left: 30%;
         }
       }
